@@ -1,0 +1,5 @@
+freetype-py
+svg.path
+fonttools
+pytest
+pytest-timeout

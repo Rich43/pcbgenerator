@@ -39,6 +39,13 @@ def test_export_creates_zip_and_files(tmp_path):
         names = set(z.namelist())
         top_png = z.read("preview_top.png") if "preview_top.png" in names else b""
 
+    # Validate that the PNG preview is a valid image with expected dimensions
+    from io import BytesIO
+    from PIL import Image
+    if top_png:
+        with Image.open(BytesIO(top_png)) as img:
+            assert img.size == (board.width * 10, board.height * 10)
+
     assert "GTL.gbr" in names
     assert "GTO.gbr" in names
     assert "preview_top.svg" in names

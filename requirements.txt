@@ -3,3 +3,4 @@ svg.path
 fonttools
 pytest
 pytest-timeout
+cairosvg

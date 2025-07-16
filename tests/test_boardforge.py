@@ -3,6 +3,8 @@ from pathlib import Path
 import zipfile
 import pytest
 
+EXPECTED_DIR = Path(__file__).resolve().parent / "expected"
+
 # Add the boardforge project v46 directory to sys.path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "boardforge_project_v46"))
@@ -37,7 +39,16 @@ def test_export_creates_zip_and_files(tmp_path):
     assert zip_path.exists()
     with zipfile.ZipFile(zip_path) as z:
         names = set(z.namelist())
+        gtl_data = z.read("GTL.gbr").decode()
+        gbl_data = z.read("GBL.gbr").decode()
+        gto_data = z.read("GTO.gbr").decode()
+        gbo_data = z.read("GBO.gbr").decode()
         top_png = z.read("preview_top.png") if "preview_top.png" in names else b""
+
+    expected_gtl = (EXPECTED_DIR / "simple1_GTL.gbr").read_text()
+    expected_gbl = (EXPECTED_DIR / "simple1_GBL.gbr").read_text()
+    expected_gto = (EXPECTED_DIR / "simple1_GTO.gbr").read_text()
+    expected_gbo = (EXPECTED_DIR / "simple1_GBO.gbr").read_text()
 
     # Validate that the PNG preview is a valid image with expected dimensions
     from io import BytesIO
@@ -54,6 +65,11 @@ def test_export_creates_zip_and_files(tmp_path):
     assert "preview_top.svg" in names
     assert "preview_top.png" in names
     assert len(top_png) > 0
+
+    assert gtl_data == expected_gtl
+    assert gbl_data == expected_gbl
+    assert gto_data == expected_gto
+    assert gbo_data == expected_gbo
 
 
 def test_sample_circuit_gerber_contains_trace(tmp_path):
@@ -80,6 +96,15 @@ def test_sample_circuit_gerber_contains_trace(tmp_path):
     assert zip_path.exists()
     with zipfile.ZipFile(zip_path) as z:
         gtl_data = z.read("GTL.gbr").decode()
+        gbl_data = z.read("GBL.gbr").decode()
+        gto_data = z.read("GTO.gbr").decode()
+        gbo_data = z.read("GBO.gbr").decode()
 
-    # Expect gerber trace lines formatted as coordinate commands
-    assert "D02*" in gtl_data and "D01*" in gtl_data
+    expected_gtl = (EXPECTED_DIR / "simple2_GTL.gbr").read_text()
+    expected_gbl = (EXPECTED_DIR / "simple2_GBL.gbr").read_text()
+    expected_gto = (EXPECTED_DIR / "simple2_GTO.gbr").read_text()
+    expected_gbo = (EXPECTED_DIR / "simple2_GBO.gbr").read_text()
+    assert gtl_data == expected_gtl
+    assert gbl_data == expected_gbl
+    assert gto_data == expected_gto
+    assert gbo_data == expected_gbo

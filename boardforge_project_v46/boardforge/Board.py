@@ -11,11 +11,6 @@ TOP_SILK = "GTO"
 BOTTOM_SILK = "GBO"
 
 import datetime
-def log(msg):
-    with open('boardforge.log', 'a', encoding='utf-8') as f:
-        f.write(f"{datetime.datetime.now().isoformat()} {msg}\n")
-
-import datetime
 import pprint
 def log(msg, obj=None):
     with open('boardforge.log', 'a', encoding='utf-8') as f:

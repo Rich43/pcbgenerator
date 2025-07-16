@@ -8,6 +8,7 @@ from .circuits import (
     create_voltage_divider,
     create_led_indicator,
     create_rc_lowpass,
+    create_bent_trace,
 )
 
 # Default symbolic layer names

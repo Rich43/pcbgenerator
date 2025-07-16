@@ -51,6 +51,27 @@ class Board:
     def trace(self, pin1, pin2, layer="GTL"):
         self.layers[layer].append(("TRACE", pin1, pin2))
 
+    def trace_path(self, points, layer="GTL"):
+        """Add a trace with intermediate bends.
+
+        Parameters
+        ----------
+        points : list
+            Sequence of coordinates or Pin objects.  Each element should
+            provide ``x`` and ``y`` attributes or be a ``(x, y)`` tuple.
+            Consecutive points will be connected with straight segments.
+        layer : str
+            Board layer to place the trace on. Defaults to "GTL".
+        """
+        processed = []
+        for p in points:
+            if hasattr(p, "x") and hasattr(p, "y"):
+                processed.append((p.x, p.y))
+            else:
+                processed.append((p[0], p[1]))
+        if len(processed) >= 2:
+            self.layers[layer].append(("TRACE_PATH", processed))
+
     def add_svg_graphic(self, svg_path, layer, scale=1.0, at=(0, 0)):
         log('ENTER add_svg_graphic', locals())
         log("add_svg_graphic called")
@@ -105,6 +126,14 @@ class Board:
                     svg_elements.append(
                         f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="{colors["trace"]}" stroke-width="4"/>'
                     )
+                elif isinstance(trace, tuple) and trace[0] == "TRACE_PATH":
+                    pts = trace[1]
+                    for i in range(len(pts) - 1):
+                        x1, y1 = int(pts[i][0] * 10), int(pts[i][1] * 10)
+                        x2, y2 = int(pts[i + 1][0] * 10), int(pts[i + 1][1] * 10)
+                        svg_elements.append(
+                            f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="{colors["trace"]}" stroke-width="4"/>'
+                        )
 
             # Pads with rotation drawn above traces
             for comp in self.components:

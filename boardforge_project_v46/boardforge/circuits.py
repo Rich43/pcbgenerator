@@ -99,3 +99,22 @@ def create_rc_lowpass():
     board.trace(c.pin("B"), j1.pin("GND"))
 
     return board
+
+
+def create_bent_trace():
+    """Return a board demonstrating a trace with a 90-degree bend."""
+    board = Board(width=5, height=5)
+    board.set_layer_stack(["GTL", "GBL", TOP_SILK, BOTTOM_SILK])
+
+    j1 = board.add_component("IN", ref="J1", at=(0.5, 2.5))
+    j1.add_pin("SIG", dx=0, dy=0)
+    j1.add_pad("SIG", dx=0, dy=0, w=1, h=1)
+
+    j2 = board.add_component("OUT", ref="J2", at=(4.5, 2.5))
+    j2.add_pin("SIG", dx=0, dy=0)
+    j2.add_pad("SIG", dx=0, dy=0, w=1, h=1)
+
+    path = [j1.pin("SIG"), (2.5, 4.0), j2.pin("SIG")]
+    board.trace_path(path)
+
+    return board

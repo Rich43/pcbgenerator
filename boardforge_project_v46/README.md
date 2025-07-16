@@ -21,11 +21,18 @@ This is a modular, programmable system for generating PCB layouts using Python, 
 
 ## 🔧 Setup
 
-Install the required libraries:
+Install the required libraries using the provided `requirements.txt` file:
 ```bash
-pip install freetype-py
-pip install svg.path
-pip install fonttools
+pip install -r requirements.txt
+```
+
+### Testing
+
+The tests are executed with `pytest`.  The `pytest-timeout` plugin is enabled
+so each test is limited to five seconds.
+
+```bash
+pytest
 ```
 
 ## 📁 Folder Structure

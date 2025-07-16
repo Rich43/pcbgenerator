@@ -1,5 +1,8 @@
+from pathlib import Path
 from boardforge import Board, TOP_SILK, BOTTOM_SILK
 import os
+
+BASE_DIR = Path(__file__).resolve().parent
 
 board = Board(width=80, height=60)
 board.set_layer_stack(["GTL", "GBL", TOP_SILK, BOTTOM_SILK])
@@ -54,12 +57,14 @@ for d in leds:
     board.trace(d.pin("K"), bat.pin("GND"))
 
 # Silkscreen text labels
+font_path = BASE_DIR / "fonts" / "RobotoMono.ttf"
 for c in [bat, sw] + resistors + leds:
-    board.add_text_ttf(c.ref, font_path="fonts/RobotoMono.ttf", at=(c.at[0]-4, c.at[1]-5), size=1.2, layer=TOP_SILK)
+    board.add_text_ttf(c.ref, font_path=str(font_path), at=(c.at[0]-4, c.at[1]-5), size=1.2, layer=TOP_SILK)
 
-svg_path = os.path.join("graphics", "torch.svg")
-if os.path.exists(svg_path):
-    board.add_svg_graphic(svg_path, layer=TOP_SILK, scale=1.2, at=(5, 5))
+svg_path = BASE_DIR / "graphics" / "torch.svg"
+if svg_path.exists():
+    board.add_svg_graphic(str(svg_path), layer=TOP_SILK, scale=1.2, at=(5, 5))
 
-board.save_svg_previews("output")
-board.export_gerbers("output/boardforge_output.zip")
+output_dir = BASE_DIR / "output"
+board.save_svg_previews(str(output_dir))
+board.export_gerbers(str(output_dir / "boardforge_output.zip"))

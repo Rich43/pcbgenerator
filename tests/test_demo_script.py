@@ -1,0 +1,93 @@
+import sys
+from pathlib import Path
+import zipfile
+import pytest
+
+# Add boardforge project v46 to path
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "boardforge_project_v46"))
+
+from boardforge import Board, TOP_SILK, BOTTOM_SILK
+
+
+def test_demo_script_equivalent(tmp_path):
+    base = ROOT / "boardforge_project_v46"
+    font_path = base / "fonts" / "RobotoMono.ttf"
+    svg_path = base / "graphics" / "torch.svg"
+
+    board = Board(width=80, height=60)
+    board.set_layer_stack(["GTL", "GBL", TOP_SILK, BOTTOM_SILK])
+
+    bat = board.add_component("CR2032", ref="BT1", at=(40, 10))
+    bat.add_pin("VCC", dx=0, dy=0)
+    bat.add_pin("GND", dx=10, dy=0)
+    bat.add_pad("VCC", dx=0, dy=0, w=2, h=2)
+    bat.add_pad("GND", dx=10, dy=0, w=2, h=2)
+
+    sw = board.add_component("SWITCH", ref="SW1", at=(40, 20))
+    sw.add_pin("A", dx=-2, dy=0)
+    sw.add_pin("B", dx=2, dy=0)
+    sw.add_pad("A", dx=-2, dy=0, w=1.8, h=1.8)
+    sw.add_pad("B", dx=2, dy=0, w=1.8, h=1.8)
+
+    resistor_positions = [(20, 35), (40, 35), (60, 35)]
+    resistors = []
+    for i, pos in enumerate(resistor_positions):
+        r = board.add_component("RESISTOR", ref=f"R{i+1}", at=pos)
+        r.add_pin("A", dx=-3, dy=0)
+        r.add_pin("B", dx=3, dy=0)
+        r.add_pad("A", dx=-3, dy=0, w=1.6, h=1.6)
+        r.add_pad("B", dx=3, dy=0, w=1.6, h=1.6)
+        resistors.append(r)
+
+    led_positions = [
+        (20, 50, 45),
+        (40, 50, 0),
+        (60, 50, -45),
+    ]
+    leds = []
+    for i, (x, y, ang) in enumerate(led_positions):
+        d = board.add_component("LED", ref=f"D{i+1}", at=(x, y), rotation=ang)
+        d.add_pin("A", dx=0, dy=-2)
+        d.add_pin("K", dx=0, dy=2)
+        d.add_pad("A", dx=0, dy=-2, w=1.6, h=1.6)
+        d.add_pad("K", dx=0, dy=2, w=1.6, h=1.6)
+        leds.append(d)
+
+    board.trace(bat.pin("VCC"), sw.pin("A"))
+    for r in resistors:
+        board.trace(sw.pin("B"), r.pin("A"))
+    for r, d in zip(resistors, leds):
+        board.trace(r.pin("B"), d.pin("A"))
+    for d in leds:
+        board.trace(d.pin("K"), bat.pin("GND"))
+
+    for c in [bat, sw] + resistors + leds:
+        board.add_text_ttf(
+            c.ref,
+            font_path=str(font_path),
+            at=(c.at[0]-4, c.at[1]-5),
+            size=1.2,
+            layer=TOP_SILK,
+        )
+
+    if svg_path.exists():
+        board.add_svg_graphic(str(svg_path), layer=TOP_SILK, scale=1.2, at=(5, 5))
+
+    board.save_svg_previews(tmp_path)
+    zip_path = tmp_path / "demo_output.zip"
+    board.export_gerbers(zip_path)
+
+    assert zip_path.exists()
+    with zipfile.ZipFile(zip_path) as z:
+        names = set(z.namelist())
+        assert {"GTL.gbr", "GBL.gbr", "GTO.gbr", "GBO.gbr"}.issubset(names)
+        assert {"preview_top.svg", "preview_bottom.svg", "preview_top.png", "preview_bottom.png"}.issubset(names)
+        top_png = z.read("preview_top.png") if "preview_top.png" in names else b""
+
+    if top_png:
+        from io import BytesIO
+        from PIL import Image
+        with Image.open(BytesIO(top_png)) as img:
+            assert img.size == (board.width * 10, board.height * 10)
+            assert img.getpixel((30, 30)) == (93, 34, 146, 255)

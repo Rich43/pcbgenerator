@@ -4,3 +4,4 @@ fonttools
 pytest
 pytest-timeout
 cairosvg
+pillow

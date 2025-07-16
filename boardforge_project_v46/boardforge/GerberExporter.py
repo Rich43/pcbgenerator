@@ -37,6 +37,15 @@ def export_gerbers(board, output_zip_path):
                             y2 = int(pin2.y * 1000)
                             f.write(f"X{x1:07d}Y{y1:07d}D02*\n")
                             f.write(f"X{x2:07d}Y{y2:07d}D01*\n")
+                        elif isinstance(line, tuple) and line[0] == "TRACE_PATH":
+                            pts = line[1]
+                            for i in range(len(pts) - 1):
+                                x1 = int(pts[i][0] * 1000)
+                                y1 = int(pts[i][1] * 1000)
+                                x2 = int(pts[i + 1][0] * 1000)
+                                y2 = int(pts[i + 1][1] * 1000)
+                                f.write(f"X{x1:07d}Y{y1:07d}D02*\n")
+                                f.write(f"X{x2:07d}Y{y2:07d}D01*\n")
                         else:
                             f.write(f"{line}\n")
         

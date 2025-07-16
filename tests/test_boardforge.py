@@ -37,10 +37,13 @@ def test_export_creates_zip_and_files(tmp_path):
     assert zip_path.exists()
     with zipfile.ZipFile(zip_path) as z:
         names = set(z.namelist())
+        top_png = z.read("preview_top.png") if "preview_top.png" in names else b""
 
     assert "GTL.gbr" in names
     assert "GTO.gbr" in names
     assert "preview_top.svg" in names
+    assert "preview_top.png" in names
+    assert len(top_png) > 0
 
 
 def test_sample_circuit_gerber_contains_trace(tmp_path):

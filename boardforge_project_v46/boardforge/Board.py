@@ -170,6 +170,17 @@ class Board:
             try:
                 with open(output_path, "w", encoding="utf-8") as f:
                     f.write('\n'.join(svg_content))
+                # Convert the SVG preview to PNG for easier visual inspection
+                try:
+                    from cairosvg import svg2png
+                    png_path = os.path.join(outdir, f"preview_{suffix}.png")
+                    svg2png(bytes('\n'.join(svg_content), 'utf-8'), write_to=png_path)
+                    # Simple verification: ensure the file was written and is not empty
+                    if os.path.getsize(png_path) == 0:
+                        os.remove(png_path)
+                        raise ValueError("Generated PNG is empty")
+                except Exception as e:
+                    print(f"Error converting SVG to PNG: {e}")
             except Exception as e:
                 print(f"Error writing SVG preview to {output_path}: {e}")
 

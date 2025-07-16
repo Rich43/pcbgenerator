@@ -10,6 +10,7 @@ This repository contains several versions of the **BoardForge** project, a Pytho
 │   ├── boardforge/                    # Python package with PCB classes
 │   ├── fonts/                         # Font files used for text rendering
 │   ├── graphics/                      # Example SVG assets
+│   ├── examples/                      # Additional usage demos
 │   └── output/                        # Generated Gerber previews
 ├── boardforge_project_v46_grokmod.zip # Zipped copy of v46 project
 ├── boardforge_project_v5/             # Previous revision (v5)
@@ -23,6 +24,9 @@ This repository contains several versions of the **BoardForge** project, a Pytho
 ```
 
 Log files such as `boardforge.log` may appear when running the demos.
+
+Example scripts in the `examples/` folder demonstrate advanced usage such as
+the `arduino_like.py` microcontroller board.
 
 ## Running the tests
 

@@ -99,8 +99,15 @@ from boardforge import (
 
 divider = create_voltage_divider()
 indicator = create_led_indicator()
+
 lowpass = create_rc_lowpass()
 ```
+
+## 📚 Additional Example
+
+An Arduino-like microcontroller board is provided under `examples/arduino_like.py`.
+Run the script to generate `output/arduino_like.zip` and preview images. See
+`examples/README.md` for the pinout and component overview.
 
 ## 🧰 API Reference
 

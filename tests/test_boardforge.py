@@ -45,6 +45,9 @@ def test_export_creates_zip_and_files(tmp_path):
     if top_png:
         with Image.open(BytesIO(top_png)) as img:
             assert img.size == (board.width * 10, board.height * 10)
+            # Verify board colour and trace colour at known points
+            assert img.getpixel((30, 30)) == (93, 34, 146, 255)
+            assert img.getpixel((25, 20)) == (255, 193, 0, 255)
 
     assert "GTL.gbr" in names
     assert "GTO.gbr" in names

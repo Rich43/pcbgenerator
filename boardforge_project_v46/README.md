@@ -86,6 +86,22 @@ board.add_text_ttf("Torch-O-Matic 3000", font_path="fonts/RobotoMono.ttf", at=(5
 board.export_gerbers("output/boardforge_output.zip")
 ```
 
+## 🪫 Common Circuits
+
+The package also provides helpers to create a few everyday circuits:
+
+```python
+from boardforge import (
+    create_voltage_divider,
+    create_led_indicator,
+    create_rc_lowpass,
+)
+
+divider = create_voltage_divider()
+indicator = create_led_indicator()
+lowpass = create_rc_lowpass()
+```
+
 ## 🧰 API Reference
 
 ### `Board`

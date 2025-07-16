@@ -96,35 +96,6 @@ class Board:
                 f'<rect x="0" y="0" width="{width_px}" height="{height_px}" fill="{colors["board"]}" rx="16"/>'
             ]
 
-            # Pads with rotation
-            for comp in self.components:
-                cos_r = math.cos(math.radians(comp.rotation))
-                sin_r = math.sin(math.radians(comp.rotation))
-                for pad in getattr(comp, "pads", []):
-                    # Get pad position relative to component
-                    px = getattr(pad, "x", 0) or 0
-                    py = getattr(pad, "y", 0) or 0
-                    # Apply component rotation and translation
-                    x = comp.at[0] + (px * cos_r - py * sin_r)
-                    y = comp.at[1] + (px * sin_r + py * cos_r)
-                    x = int(x * 10)
-                    y = int(y * 10)
-                    w = int((getattr(pad, "w", 1.2) or 1.2) * 10)
-                    h = int((getattr(pad, "h", 1.2) or 1.2) * 10)
-                    if abs(w - h) <= 1:  # Through-hole pad (circular)
-                        ring_r = int((w + 6) // 2)
-                        pad_r = int(w // 2)
-                        svg_elements.append(
-                            f'<circle cx="{x}" cy="{y}" r="{ring_r}" fill="{colors["ring"]}" stroke="#333" stroke-width="1"/>'
-                        )
-                        svg_elements.append(
-                            f'<circle cx="{x}" cy="{y}" r="{pad_r}" fill="{colors["pad"]}" stroke="#333" stroke-width="2"/>'
-                        )
-                    else:  # SMD pad (rectangular)
-                        svg_elements.append(
-                            f'<rect x="{x-w//2}" y="{y-h//2}" width="{w}" height="{h}" fill="{colors["pad"]}" stroke="#333" stroke-width="2" transform="rotate({comp.rotation},{x},{y})"/>'
-                        )
-
             # Traces (placeholder: draws a line for each trace)
             for trace in self.layers.get("GTL" if side == "GTO" else "GBL", []):
                 if isinstance(trace, tuple) and trace[0] == "TRACE":
@@ -134,6 +105,27 @@ class Board:
                     svg_elements.append(
                         f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="{colors["trace"]}" stroke-width="4"/>'
                     )
+
+            # Pads with rotation drawn above traces
+            for comp in self.components:
+                for pad in getattr(comp, "pads", []):
+                    x = int(pad.x * 10)
+                    y = int(pad.y * 10)
+                    w = int((getattr(pad, "w", 1.2) or 1.2) * 10)
+                    h = int((getattr(pad, "h", 1.2) or 1.2) * 10)
+                    if abs(w - h) <= 1:
+                        ring_r = int((w + 6) // 2)
+                        pad_r = int(w // 2)
+                        svg_elements.append(
+                            f'<circle cx="{x}" cy="{y}" r="{ring_r}" fill="{colors["ring"]}" stroke="#333" stroke-width="1"/>'
+                        )
+                        svg_elements.append(
+                            f'<circle cx="{x}" cy="{y}" r="{pad_r}" fill="{colors["pad"]}" stroke="#333" stroke-width="2"/>'
+                        )
+                    else:
+                        svg_elements.append(
+                            f'<rect x="{x-w//2}" y="{y-h//2}" width="{w}" height="{h}" fill="{colors["pad"]}" stroke="#333" stroke-width="2" transform="rotate({comp.rotation},{x},{y})"/>'
+                        )
 
             # Silkscreen text from _svg_text_calls
             for (text, at, size, lyr) in self._svg_text_calls:

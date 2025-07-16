@@ -91,3 +91,33 @@ def test_demo_script_equivalent(tmp_path):
         with Image.open(BytesIO(top_png)) as img:
             assert img.size == (board.width * 10, board.height * 10)
             assert img.getpixel((30, 30)) == (93, 34, 146, 255)
+
+            # verify pad colours and rings
+            for comp in [bat, sw] + resistors + leds:
+                for pad in comp.pads:
+                    px = int(pad.x * 10)
+                    py = int(pad.y * 10)
+                    assert img.getpixel((px, py)) == (255, 193, 0, 255)
+
+                    if abs(pad.w - pad.h) <= 0.1:
+                        ring_r = int((int(pad.w * 10) + 6) // 2)
+                        ring_px = px + ring_r - 2
+                        if ring_px < img.width:
+                            assert img.getpixel((ring_px, py)) == (255, 236, 128, 255)
+
+            # verify silkscreen text renders in white
+            for comp in [bat, sw] + resistors + leds:
+                tx = int((comp.at[0] - 4) * 10)
+                ty = int((comp.at[1] - 5) * 10)
+                found_white = False
+                for dx in range(-10, 11):
+                    for dy in range(-10, 11):
+                        x = tx + dx
+                        y = ty + dy
+                        if 0 <= x < img.width and 0 <= y < img.height:
+                            if img.getpixel((x, y)) == (255, 255, 255, 255):
+                                found_white = True
+                                break
+                    if found_white:
+                        break
+                assert found_white

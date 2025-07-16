@@ -41,3 +41,32 @@ def test_export_creates_zip_and_files(tmp_path):
     assert "GTL.gbr" in names
     assert "GTO.gbr" in names
     assert "preview_top.svg" in names
+
+
+def test_sample_circuit_gerber_contains_trace(tmp_path):
+    board = Board(width=5, height=5)
+    board.set_layer_stack(["GTL", "GBL", TOP_SILK, BOTTOM_SILK])
+
+    r1 = board.add_component("RES", ref="R1", at=(1, 1))
+    r1.add_pin("A", dx=-0.5, dy=0)
+    r1.add_pin("B", dx=0.5, dy=0)
+    r1.add_pad("A", dx=-0.5, dy=0, w=1, h=1)
+    r1.add_pad("B", dx=0.5, dy=0, w=1, h=1)
+
+    r2 = board.add_component("RES", ref="R2", at=(3, 1))
+    r2.add_pin("A", dx=-0.5, dy=0)
+    r2.add_pin("B", dx=0.5, dy=0)
+    r2.add_pad("A", dx=-0.5, dy=0, w=1, h=1)
+    r2.add_pad("B", dx=0.5, dy=0, w=1, h=1)
+
+    board.trace(r1.pin("B"), r2.pin("A"))
+
+    zip_path = tmp_path / "circuit.zip"
+    board.export_gerbers(zip_path)
+
+    assert zip_path.exists()
+    with zipfile.ZipFile(zip_path) as z:
+        gtl_data = z.read("GTL.gbr").decode()
+
+    # Expect gerber trace lines formatted as coordinate commands
+    assert "D02*" in gtl_data and "D01*" in gtl_data

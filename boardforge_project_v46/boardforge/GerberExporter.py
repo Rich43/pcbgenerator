@@ -29,7 +29,16 @@ def export_gerbers(board, output_zip_path):
                 # Ensure content is iterable and handle potential None values
                 if content:
                     for line in content:
-                        f.write(f"{line}\n")
+                        if isinstance(line, tuple) and line[0] == "TRACE":
+                            pin1, pin2 = line[1], line[2]
+                            x1 = int(pin1.x * 1000)
+                            y1 = int(pin1.y * 1000)
+                            x2 = int(pin2.x * 1000)
+                            y2 = int(pin2.y * 1000)
+                            f.write(f"X{x1:07d}Y{y1:07d}D02*\n")
+                            f.write(f"X{x2:07d}Y{y2:07d}D01*\n")
+                        else:
+                            f.write(f"{line}\n")
         
         # Save SVG previews if the method exists
         if hasattr(board, 'save_svg_previews'):

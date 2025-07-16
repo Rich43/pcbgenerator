@@ -3,6 +3,8 @@ from pathlib import Path
 import zipfile
 import pytest
 
+EXPECTED_DIR = Path(__file__).resolve().parent / "expected"
+
 # Add boardforge project v46 to path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "boardforge_project_v46"))
@@ -83,7 +85,16 @@ def test_demo_script_equivalent(tmp_path):
         names = set(z.namelist())
         assert {"GTL.gbr", "GBL.gbr", "GTO.gbr", "GBO.gbr"}.issubset(names)
         assert {"preview_top.svg", "preview_bottom.svg", "preview_top.png", "preview_bottom.png"}.issubset(names)
+        gtl_data = z.read("GTL.gbr").decode()
+        gbl_data = z.read("GBL.gbr").decode()
+        gto_data = z.read("GTO.gbr").decode()
+        gbo_data = z.read("GBO.gbr").decode()
         top_png = z.read("preview_top.png") if "preview_top.png" in names else b""
+
+    expected_gtl = (EXPECTED_DIR / "demo_GTL.gbr").read_text()
+    expected_gbl = (EXPECTED_DIR / "demo_GBL.gbr").read_text()
+    expected_gto = (EXPECTED_DIR / "demo_GTO.gbr").read_text()
+    expected_gbo = (EXPECTED_DIR / "demo_GBO.gbr").read_text()
 
     if top_png:
         from io import BytesIO
@@ -121,3 +132,8 @@ def test_demo_script_equivalent(tmp_path):
                     if found_white:
                         break
                 assert found_white
+
+    assert gtl_data == expected_gtl
+    assert gbl_data == expected_gbl
+    assert gto_data == expected_gto
+    assert gbo_data == expected_gbo

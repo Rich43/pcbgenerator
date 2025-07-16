@@ -139,20 +139,6 @@ class Board:
                     svg_elements.append(
                         f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="{colors["trace"]}" stroke-width="4"/>'
                     )
-            if isinstance(trace, tuple) and trace[0] == "TRACE":
-                pin1, pin2 = trace[1], trace[2]
-                x1, y1 = int(pin1.x * 10), int(pin1.y * 10)
-                x2, y2 = int(pin2.x * 10), int(pin2.y * 10)
-                svg_elements.append(
-                    f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="{colors["trace"]}" stroke-width="4"/>'
-                )
-                if "Trace from" in trace:
-                    m = re.search(r"from (.*?) to (.*?) on", trace)
-                    if m:
-                        # Placeholder: draw a diagonal line (real routing needs actual coordinates)
-                        svg_elements.append(
-                            f'<line x1="10" y1="10" x2="{width_px-10}" y2="{height_px-10}" stroke="{colors["trace"]}" stroke-width="5"/>'
-                        )
 
             # Silkscreen text from _svg_text_calls
             for (text, at, size, lyr) in self._svg_text_calls:

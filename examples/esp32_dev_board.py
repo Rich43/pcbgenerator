@@ -1,5 +1,5 @@
 from pathlib import Path
-from boardforge import Board, TOP_SILK, BOTTOM_SILK
+from boardforge import PCB, Layer
 
 BASE_DIR = Path(__file__).resolve().parent
 FONT_PATH = BASE_DIR.parent / "fonts" / "RobotoMono.ttf"
@@ -7,8 +7,13 @@ OUTPUT_DIR = BASE_DIR.parent / "output"
 
 
 def build_board():
-    board = Board(width=60, height=35)
-    board.set_layer_stack(["GTL", "GBL", TOP_SILK, BOTTOM_SILK])
+    board = PCB(width=60, height=35)
+    board.set_layer_stack([
+        Layer.TOP_COPPER.value,
+        Layer.BOTTOM_COPPER.value,
+        Layer.TOP_SILK.value,
+        Layer.BOTTOM_SILK.value,
+    ])
 
     # Mounting holes
     holes = [(3, 3), (57, 3), (3, 32), (57, 32)]
@@ -136,13 +141,13 @@ def build_board():
     ])
 
     # GND traces
-    board.trace(boot.pin("2"), esp32.pin("GND"))
-    board.trace(reset.pin("2"), esp32.pin("GND"))
-    board.trace(ldo.pin("GND"), esp32.pin("GND"))
-    board.trace(ch340.pin("GND"), esp32.pin("GND"))
+    board.route_trace("SW_BOOT:2", "U1:GND")
+    board.route_trace("SW_RESET:2", "U1:GND")
+    board.route_trace("U3:GND", "U1:GND")
+    board.route_trace("U2:GND", "U1:GND")
 
-    board.add_text_ttf("ESP32 Dev Board", font_path=str(FONT_PATH), at=(5, 32), size=1.2, layer=TOP_SILK)
-    board.add_text_ttf("USB-C", font_path=str(FONT_PATH), at=(28, 2), size=1.0, layer=TOP_SILK)
+    board.add_text_ttf("ESP32 Dev Board", font_path=str(FONT_PATH), at=(5, 32), size=1.2, layer=Layer.TOP_SILK.value)
+    board.add_text_ttf("USB-C", font_path=str(FONT_PATH), at=(28, 2), size=1.0, layer=Layer.TOP_SILK.value)
 
     return board
 

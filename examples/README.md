@@ -14,7 +14,7 @@ Another example shows how to draw a trace with a bend:
 python bent_trace.py
 ```
 
-Gerber files and SVG previews will be written to `boardforge_project_v46/output/arduino_like.zip` and the corresponding preview PNG/SVG files.
+Gerber files and SVG previews will be written to `output/arduino_like.zip` and the corresponding preview PNG/SVG files.
 
 ## MCU Pinout
 

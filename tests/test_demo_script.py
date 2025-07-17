@@ -5,15 +5,15 @@ import pytest
 
 EXPECTED_DIR = Path(__file__).resolve().parent / "expected"
 
-# Add boardforge project v46 to path
+# Add repository root to path
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "boardforge_project_v46"))
+sys.path.insert(0, str(ROOT))
 
 from boardforge import Board, TOP_SILK, BOTTOM_SILK
 
 
 def test_demo_script_equivalent(tmp_path):
-    base = ROOT / "boardforge_project_v46"
+    base = ROOT
     font_path = base / "fonts" / "RobotoMono.ttf"
     svg_path = base / "graphics" / "torch.svg"
 

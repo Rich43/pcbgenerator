@@ -5,9 +5,9 @@ import pytest
 
 EXPECTED_DIR = Path(__file__).resolve().parent / "expected"
 
-# Add the boardforge project v46 directory to sys.path
+# Add the repository root to sys.path
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "boardforge_project_v46"))
+sys.path.insert(0, str(ROOT))
 
 from boardforge import Pin, Component, Board, TOP_SILK, BOTTOM_SILK
 

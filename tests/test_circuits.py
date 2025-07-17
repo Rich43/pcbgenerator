@@ -9,6 +9,7 @@ from boardforge import (
     create_voltage_divider,
     create_led_indicator,
     create_rc_lowpass,
+    Layer,
 )
 
 
@@ -23,21 +24,21 @@ def check_zip_created(board, tmp_path):
 def test_voltage_divider(tmp_path):
     board = create_voltage_divider()
     assert len(board.components) == 4
-    assert len(board.layers["GTL"]) == 4
+    assert len(board.layers[Layer.TOP_COPPER.value]) == 4
     check_zip_created(board, tmp_path)
 
 
 def test_led_indicator(tmp_path):
     board = create_led_indicator()
     assert len(board.components) == 3
-    assert len(board.layers["GTL"]) == 3
+    assert len(board.layers[Layer.TOP_COPPER.value]) == 3
     check_zip_created(board, tmp_path)
 
 
 def test_rc_lowpass(tmp_path):
     board = create_rc_lowpass()
     assert len(board.components) == 4
-    assert len(board.layers["GTL"]) == 4
+    assert len(board.layers[Layer.TOP_COPPER.value]) == 4
     check_zip_created(board, tmp_path)
 
 

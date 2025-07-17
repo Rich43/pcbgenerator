@@ -9,7 +9,7 @@ EXPECTED_DIR = Path(__file__).resolve().parent / "expected"
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from boardforge import Board, TOP_SILK, BOTTOM_SILK
+from boardforge import PCB, Layer
 
 
 def test_demo_script_equivalent(tmp_path):
@@ -17,8 +17,13 @@ def test_demo_script_equivalent(tmp_path):
     font_path = base / "fonts" / "RobotoMono.ttf"
     svg_path = base / "graphics" / "torch.svg"
 
-    board = Board(width=80, height=60)
-    board.set_layer_stack(["GTL", "GBL", TOP_SILK, BOTTOM_SILK])
+    board = PCB(width=80, height=60)
+    board.set_layer_stack([
+        Layer.TOP_COPPER.value,
+        Layer.BOTTOM_COPPER.value,
+        Layer.TOP_SILK.value,
+        Layer.BOTTOM_SILK.value,
+    ])
 
     bat = board.add_component("CR2032", ref="BT1", at=(40, 10))
     bat.add_pin("VCC", dx=0, dy=0)
@@ -56,13 +61,13 @@ def test_demo_script_equivalent(tmp_path):
         d.add_pad("K", dx=0, dy=2, w=1.6, h=1.6)
         leds.append(d)
 
-    board.trace(bat.pin("VCC"), sw.pin("A"))
+    board.route_trace("BT1:VCC", "SW1:A")
     for r in resistors:
-        board.trace(sw.pin("B"), r.pin("A"))
+        board.route_trace("SW1:B", f"{r.ref}:A")
     for r, d in zip(resistors, leds):
-        board.trace(r.pin("B"), d.pin("A"))
+        board.route_trace(f"{r.ref}:B", f"{d.ref}:A")
     for d in leds:
-        board.trace(d.pin("K"), bat.pin("GND"))
+        board.route_trace(f"{d.ref}:K", "BT1:GND")
 
     for c in [bat, sw] + resistors + leds:
         board.add_text_ttf(
@@ -70,11 +75,11 @@ def test_demo_script_equivalent(tmp_path):
             font_path=str(font_path),
             at=(c.at[0]-4, c.at[1]-5),
             size=1.2,
-            layer=TOP_SILK,
+            layer=Layer.TOP_SILK.value,
         )
 
     if svg_path.exists():
-        board.add_svg_graphic(str(svg_path), layer=TOP_SILK, scale=1.2, at=(5, 5))
+        board.add_svg_graphic(str(svg_path), layer=Layer.TOP_SILK.value, scale=1.2, at=(5, 5))
 
     board.save_svg_previews(tmp_path)
     zip_path = tmp_path / "demo_output.zip"

@@ -37,7 +37,7 @@ pytest
 
 ## 📁 Folder Structure
 ```
-boardforge_project_v46/
+./
 ├── boardforge/
 │   ├── Board.py
 │   ├── Component.py

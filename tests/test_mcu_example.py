@@ -3,7 +3,7 @@ from pathlib import Path
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "boardforge_project_v46"))
+sys.path.insert(0, str(ROOT))
 
 from examples import arduino_like
 

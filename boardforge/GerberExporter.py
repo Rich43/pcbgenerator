@@ -31,6 +31,7 @@ def export_gerbers(board, output_zip_path):
                     for line in content:
                         if isinstance(line, tuple) and line[0] == "TRACE":
                             pin1, pin2 = line[1], line[2]
+                            # Optional width stored at line[3]
                             x1 = int(pin1.x * 1000)
                             y1 = int(pin1.y * 1000)
                             x2 = int(pin2.x * 1000)
@@ -39,6 +40,7 @@ def export_gerbers(board, output_zip_path):
                             f.write(f"X{x2:07d}Y{y2:07d}D01*\n")
                         elif isinstance(line, tuple) and line[0] == "TRACE_PATH":
                             pts = line[1]
+                            # line[2] may contain width
                             for i in range(len(pts) - 1):
                                 x1 = int(pts[i][0] * 1000)
                                 y1 = int(pts[i][1] * 1000)

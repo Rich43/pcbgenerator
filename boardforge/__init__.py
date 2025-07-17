@@ -5,6 +5,7 @@ from .Via import Via
 from .Graphic import Graphic
 from .Board import Board
 from .Zone import Zone
+from .drc import check_board
 from .circuits import (
     create_voltage_divider,
     create_led_indicator,
@@ -55,4 +56,5 @@ __all__ = [
     "create_bent_trace",
     "TOP_SILK",
     "BOTTOM_SILK",
+    "check_board",
 ]

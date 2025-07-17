@@ -1,5 +1,6 @@
 from .Component import Component
 from .GerberExporter import export_gerbers
+from .drc import check_board
 from .Pin import Pin
 from .Via import Via
 from .Zone import Zone
@@ -56,8 +57,9 @@ class Board:
         return comp
         log('EXIT add_component', {'self': self.__dict__})
 
-    def trace(self, pin1, pin2, layer="GTL"):
-        self.layers[layer].append(("TRACE", pin1, pin2))
+    def trace(self, pin1, pin2, layer="GTL", width=1.0):
+        """Add a simple straight trace between two pins."""
+        self.layers[layer].append(("TRACE", pin1, pin2, width))
 
     def _find_pin(self, ref_pin):
         """Lookup a Pin object given a string like "U1:VCC"."""
@@ -80,9 +82,9 @@ class Board:
         if bends:
             pts.extend(bends)
         pts.append(self._find_pin(end))
-        self.trace_path(pts, layer=layer)
+        self.trace_path(pts, layer=layer, width=width)
 
-    def trace_path(self, points, layer="GTL"):
+    def trace_path(self, points, layer="GTL", width=1.0):
         """Add a trace with intermediate bends.
 
         Parameters
@@ -101,7 +103,7 @@ class Board:
             else:
                 processed.append((p[0], p[1]))
         if len(processed) >= 2:
-            self.layers[layer].append(("TRACE_PATH", processed))
+            self.layers[layer].append(("TRACE_PATH", processed, width))
 
     def add_via(self, x, y, from_layer="GTL", to_layer="GBL"):
         """Create a via connecting two layers."""
@@ -139,6 +141,10 @@ class Board:
         except Exception as e:
             print(f"TTF render error: {e}")
         log('EXIT add_text_ttf', {'self': self.__dict__})
+
+    def design_rule_check(self, min_trace_width=0.15, min_clearance=0.15):
+        """Return a list of DRC warnings for the board."""
+        return check_board(self, min_trace_width=min_trace_width, min_clearance=min_clearance)
 
     def save_svg_previews(self, outdir="."):
         log('ENTER save_svg_previews', locals())
@@ -252,6 +258,11 @@ class Board:
     def export_gerbers(self, out_path):
         log('ENTER export_gerbers', locals())
         log("export_gerbers called")
+        warnings = self.design_rule_check()
+        if warnings:
+            print("DRC warnings:")
+            for w in warnings:
+                print(" -", w)
         export_gerbers(self, out_path)
 
     def export_all(self, out_path):

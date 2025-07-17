@@ -22,7 +22,8 @@ This repository contains the **BoardForge** project, a Python based PCB generato
 Log files such as `boardforge.log` may appear when running the demos.
 
 Example scripts in the `examples/` folder demonstrate advanced usage such as
-the `arduino_like.py` microcontroller board.
+the `arduino_like.py` microcontroller board and the
+`buck_boost_converter.py` power module with display and buttons.
 
 ## Running the tests
 

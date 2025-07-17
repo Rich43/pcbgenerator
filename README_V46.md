@@ -84,6 +84,8 @@ board.add_svg_graphic(svg_path, layer=BOTTOM_SILK, scale=1.0, at=(10, 10))
 board.add_text_ttf("Torch-O-Matic 3000", font_path="fonts/RobotoMono.ttf", at=(5, 50), size=1.5, layer=TOP_SILK)
 
 board.export_gerbers("output/boardforge_output.zip")
+# Creates 'boardforge_output.zip' and an exploded
+# folder 'boardforge_output' with the same files
 ```
 
 ## 🪫 Common Circuits

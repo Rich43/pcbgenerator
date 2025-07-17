@@ -71,6 +71,11 @@ def test_export_creates_zip_and_files(tmp_path):
     assert gto_data == expected_gto
     assert gbo_data == expected_gbo
 
+    exploded_dir = tmp_path / "out"
+    assert exploded_dir.exists()
+    assert (exploded_dir / "GTL.gbr").read_text() == expected_gtl
+    assert (exploded_dir / "preview_top.svg").exists()
+
 
 def test_sample_circuit_gerber_contains_trace(tmp_path):
     board = Board(width=5, height=5)

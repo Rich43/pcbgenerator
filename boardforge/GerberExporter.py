@@ -53,12 +53,15 @@ def export_gerbers(board, output_zip_path):
         if hasattr(board, 'save_svg_previews'):
             board.save_svg_previews(str(temp_dir))
         
-        # Create ZIP archive
+        # Prepare exploded output directory and ZIP archive
+        exploded_dir = output_zip_path.parent / output_zip_path.stem
+        exploded_dir.mkdir(parents=True, exist_ok=True)
+
         with zipfile.ZipFile(output_zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
             for file_path in temp_dir.glob("*"):
                 if file_path.is_file():
-                    # Use relative path in ZIP to avoid including full directory structure
                     zipf.write(file_path, file_path.name)
+                    shutil.copy(file_path, exploded_dir / file_path.name)
     
     except Exception as e:
         print(f"Error during Gerber export: {str(e)}")

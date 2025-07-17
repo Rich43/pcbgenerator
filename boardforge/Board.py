@@ -1,6 +1,8 @@
 from .Component import Component
 from .GerberExporter import export_gerbers
 from .Pin import Pin
+from .Via import Via
+from .Zone import Zone
 from .svgtools import render_text_ttf, render_svg_element
 import xml.etree.ElementTree as ET
 import math
@@ -27,6 +29,11 @@ class Board:
         self.width = width
         self.height = height
         self.components = []
+        # Map reference designators to components for quick lookup
+        self._ref_map = {}
+        # Containers for vias and filled zones
+        self.vias = []
+        self.zones = []
         self.layers = {"GTO": [], "GBO": []}
         self._svg_text_calls = []
         self._svg_graphics_calls = []
@@ -45,11 +52,35 @@ class Board:
         log("add_component called")
         comp = Component(ref, type, at, rotation)
         self.components.append(comp)
+        self._ref_map[ref] = comp
         return comp
         log('EXIT add_component', {'self': self.__dict__})
 
     def trace(self, pin1, pin2, layer="GTL"):
         self.layers[layer].append(("TRACE", pin1, pin2))
+
+    def _find_pin(self, ref_pin):
+        """Lookup a Pin object given a string like "U1:VCC"."""
+        if isinstance(ref_pin, Pin):
+            return ref_pin
+        if not isinstance(ref_pin, str) or ":" not in ref_pin:
+            raise ValueError("pin reference must be Pin or 'REF:PIN'")
+        ref, pin_name = ref_pin.split(":", 1)
+        comp = self._ref_map.get(ref)
+        if comp is None:
+            raise ValueError(f"Component {ref} not found")
+        pin = comp.pin(pin_name)
+        if pin is None:
+            raise ValueError(f"Pin {pin_name} not found on {ref}")
+        return pin
+
+    def route_trace(self, start, end, layer="GTL", width=1.0, bends=None):
+        """Route a trace between two pins, optionally with bends."""
+        pts = [self._find_pin(start)]
+        if bends:
+            pts.extend(bends)
+        pts.append(self._find_pin(end))
+        self.trace_path(pts, layer=layer)
 
     def trace_path(self, points, layer="GTL"):
         """Add a trace with intermediate bends.
@@ -71,6 +102,18 @@ class Board:
                 processed.append((p[0], p[1]))
         if len(processed) >= 2:
             self.layers[layer].append(("TRACE_PATH", processed))
+
+    def add_via(self, x, y, from_layer="GTL", to_layer="GBL"):
+        """Create a via connecting two layers."""
+        via = Via(x, y, from_layer, to_layer)
+        self.vias.append(via)
+        return via
+
+    def add_filled_zone(self, net=None, layer="GBL"):
+        """Store information about a filled copper zone."""
+        zone = Zone(net, layer)
+        self.zones.append(zone)
+        return zone
 
     def add_svg_graphic(self, svg_path, layer, scale=1.0, at=(0, 0)):
         log('ENTER add_svg_graphic', locals())
@@ -210,3 +253,7 @@ class Board:
         log('ENTER export_gerbers', locals())
         log("export_gerbers called")
         export_gerbers(self, out_path)
+
+    def export_all(self, out_path):
+        """Convenience method mirroring the pseudocode API."""
+        self.export_gerbers(out_path)

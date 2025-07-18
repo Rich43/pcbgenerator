@@ -101,7 +101,7 @@ def test_sample_circuit_gerber_contains_trace(tmp_path):
     r1.add_pad("A", dx=-0.5, dy=0, w=1, h=1)
     r1.add_pad("B", dx=0.5, dy=0, w=1, h=1)
 
-    r2 = board.add_component("RES", ref="R2", at=(3, 1))
+    r2 = board.add_component("RES", ref="R2", at=(3.3, 1))
     r2.add_pin("A", dx=-0.5, dy=0)
     r2.add_pin("B", dx=0.5, dy=0)
     r2.add_pad("A", dx=-0.5, dy=0, w=1, h=1)

@@ -260,9 +260,9 @@ class Board:
         log("export_gerbers called")
         warnings = self.design_rule_check()
         if warnings:
-            print("DRC warnings:")
-            for w in warnings:
-                print(" -", w)
+            log("DRC failure", {"warnings": warnings})
+            joined = "; ".join(warnings)
+            raise RuntimeError(f"Design rule check failed: {joined}")
         export_gerbers(self, out_path)
 
     def export_all(self, out_path):

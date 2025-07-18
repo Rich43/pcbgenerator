@@ -40,12 +40,16 @@ def check_board(board, min_trace_width: float = 0.15, min_clearance: float = 0.1
     # Pad clearance checks
     pads = []
     for comp in board.components:
-        pads.extend(comp.pads)
+        for pad in comp.pads:
+            pad.component = comp
+            pads.append(pad)
 
     for i in range(len(pads)):
         for j in range(i + 1, len(pads)):
             p1 = pads[i]
             p2 = pads[j]
+            if getattr(p1, "component", None) is getattr(p2, "component", None):
+                continue
             dx = p1.x - p2.x
             dy = p1.y - p2.y
             center_dist = math.hypot(dx, dy)

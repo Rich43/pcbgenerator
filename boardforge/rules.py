@@ -1,5 +1,5 @@
 LAYER_SERVICE_RULES = {
-    "2 Layer Services": {
+    "2 Layer": {
         "Minimum Clearance": "6mil (0.1524mm)",
         "Minimum track Width": "6mil (0.1524mm)",
         "Minimum Connection Width": "6mil (0.1524mm)",

@@ -70,3 +70,12 @@ def test_drc_uses_layer_service_defaults():
     warnings = board.design_rule_check()
     assert any("width" in w for w in warnings)
 
+
+def test_via_rules_enforced():
+    board = Board(width=5, height=5)
+    board.set_layer_stack(["GTL", "GBL"])
+    board.add_via(1, 1, diameter=0.3, hole=0.2)
+    board.add_via(1.2, 1, diameter=0.3, hole=0.2)
+    warnings = board.design_rule_check()
+    assert any("Via" in w for w in warnings)
+

@@ -24,7 +24,7 @@ def log(msg, obj=None):
 
 class Board:
 
-    def __init__(self, name="Board", width=100, height=80, layer_service="2 Layer Services"):
+    def __init__(self, name="Board", width=100, height=80, layer_service="2 Layer"):
         log('ENTER __init__', locals())
         log("Board __init__ called")
         self.name = name
@@ -108,9 +108,9 @@ class Board:
         if len(processed) >= 2:
             self.layers[layer].append(("TRACE_PATH", processed, width))
 
-    def add_via(self, x, y, from_layer="GTL", to_layer="GBL"):
+    def add_via(self, x, y, from_layer="GTL", to_layer="GBL", diameter=0.6, hole=0.3):
         """Create a via connecting two layers."""
-        via = Via(x, y, from_layer, to_layer)
+        via = Via(x, y, from_layer, to_layer, diameter=diameter, hole=hole)
         self.vias.append(via)
         return via
 
@@ -165,19 +165,31 @@ class Board:
                     return float(m.group(1))
             return 0.0
 
-        if (min_trace_width is None or min_clearance is None) and self.layer_service in LAYER_SERVICE_RULES:
+        extra = {}
+        if self.layer_service in LAYER_SERVICE_RULES:
             rules = LAYER_SERVICE_RULES[self.layer_service]
             if min_trace_width is None:
                 min_trace_width = _parse(rules.get("Minimum track Width", 0))
             if min_clearance is None:
                 min_clearance = _parse(rules.get("Minimum Clearance", 0))
+            extra["min_annular_ring"] = _parse(rules.get("Minimum Annular Ring", 0))
+            extra["min_via_diameter"] = _parse(rules.get("Minimum Via Diameter", 0))
+            extra["min_through_hole"] = _parse(rules.get("Minimum Through Hole", 0))
+            extra["hole_to_hole_clearance"] = _parse(rules.get("Hole to hole clearance", 0))
+            extra["min_text_height"] = _parse(rules.get("Silkscreen Min Text Height", 0))
+            extra["min_text_thickness"] = _parse(rules.get("Silkscreen Min Text Thickness", 0))
 
         if min_trace_width is None:
             min_trace_width = 0.15
         if min_clearance is None:
             min_clearance = 0.15
 
-        return check_board(self, min_trace_width=min_trace_width, min_clearance=min_clearance)
+        return check_board(
+            self,
+            min_trace_width=min_trace_width,
+            min_clearance=min_clearance,
+            **{k: v for k, v in extra.items() if v}
+        )
 
     def save_svg_previews(self, outdir="."):
         log('ENTER save_svg_previews', locals())

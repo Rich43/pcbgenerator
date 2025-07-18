@@ -6,6 +6,7 @@ from .Pin import Pin
 from .Via import Via
 from .Zone import Zone
 from .svgtools import render_text_ttf, render_svg_element
+from shapely.geometry import Polygon, box
 import xml.etree.ElementTree as ET
 import math
 import os
@@ -39,6 +40,7 @@ class Board:
         self.vias = []
         self.zones = []
         self.holes = []
+        self.outline_geom = box(0, 0, width, height)
         self.layers = {"GTO": [], "GBO": []}
         self._svg_text_calls = []
         self._svg_graphics_calls = []
@@ -119,6 +121,30 @@ class Board:
         """Store information about a filled copper zone."""
         zone = Zone(net, layer)
         self.zones.append(zone)
+        return zone
+
+    def outline(self, points):
+        """Define the board outline using a sequence of ``(x, y)`` points."""
+        self.outline_geom = Polygon(points)
+        return self.outline_geom
+
+    def oversize(self, margin):
+        """Expand the stored outline by ``margin`` mm."""
+        if self.outline_geom is None:
+            self.outline_geom = box(0, 0, self.width, self.height)
+        self.outline_geom = self.outline_geom.buffer(margin)
+        return self.outline_geom
+
+    def fill(self, points, layer="GBL", net=None):
+        """Create a filled copper polygon on the specified layer."""
+        poly = Polygon(points)
+        zone = Zone(net, layer, geometry=poly)
+        self.zones.append(zone)
+        cmds = []
+        for i, (x, y) in enumerate(poly.exterior.coords):
+            code = "D02*" if i == 0 else "D01*"
+            cmds.append(f"X{int(x*1000):07d}Y{int(y*1000):07d}{code}")
+        self.layers.setdefault(layer, []).extend(cmds)
         return zone
 
     def hole(self, xy, diameter, annulus=None):
@@ -228,8 +254,10 @@ class Board:
         }
 
         for side, suffix in [("GTO", "top"), ("GBO", "bottom")]:
+            poly = self.outline_geom if self.outline_geom is not None else box(0, 0, self.width, self.height)
+            pts = " ".join(f"{int(x*10)},{int(y*10)}" for x, y in poly.exterior.coords)
             svg_elements = [
-                f'<rect x="0" y="0" width="{width_px}" height="{height_px}" fill="{colors["board"]}" rx="16"/>'
+                f'<polygon points="{pts}" fill="{colors["board"]}"/>'
             ]
 
             # Traces (placeholder: draws a line for each trace)
@@ -249,6 +277,16 @@ class Board:
                         svg_elements.append(
                             f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="{colors["trace"]}" stroke-width="4"/>'
                         )
+
+            # Filled zones
+            for zone in self.zones:
+                if zone.layer == ("GTL" if side == "GTO" else "GBL") and zone.geometry is not None:
+                    pts = " ".join(
+                        f"{int(x*10)},{int(y*10)}" for x, y in zone.geometry.exterior.coords
+                    )
+                    svg_elements.append(
+                        f'<polygon points="{pts}" fill="{colors["trace"]}" opacity="0.6"/>'
+                    )
 
             # Pads with rotation drawn above traces
             for comp in self.components:
@@ -323,8 +361,12 @@ class Board:
                 # Convert the SVG preview to PNG for easier visual inspection
                 try:
                     from cairosvg import svg2png
+                    from PIL import Image
                     png_path = os.path.join(outdir, f"preview_{suffix}.png")
                     svg2png(bytes('\n'.join(svg_content), 'utf-8'), write_to=png_path)
+                    with Image.open(png_path) as im2:
+                        if im2.mode != "RGBA":
+                            im2.convert("RGBA").save(png_path)
                     # Simple verification: ensure the file was written and is not empty
                     if os.path.getsize(png_path) == 0:
                         os.remove(png_path)
@@ -367,8 +409,10 @@ class Board:
         }
 
         for side, suffix in [("GTO", "top"), ("GBO", "bottom")]:
-            im = Image.new("RGBA", (width_px, height_px), colors["board"])
+            im = Image.new("RGBA", (width_px, height_px), (0, 0, 0, 0))
             draw = ImageDraw.Draw(im)
+            poly = self.outline_geom if self.outline_geom is not None else box(0, 0, self.width, self.height)
+            draw.polygon([(x * scale, y * scale) for x, y in poly.exterior.coords], fill=colors["board"])
 
             layer = "GTL" if side == "GTO" else "GBL"
             for trace in self.layers.get(layer, []):
@@ -383,6 +427,11 @@ class Board:
                     pts = [(x * scale, y * scale) for (x, y) in trace[1]]
                     w = trace[2]
                     draw.line(pts, fill=colors["trace"], width=max(1, int(w * scale)))
+
+            for zone in self.zones:
+                if zone.layer == layer and zone.geometry is not None:
+                    pts = [(x * scale, y * scale) for (x, y) in zone.geometry.exterior.coords]
+                    draw.polygon(pts, fill=colors["trace"], outline=None)
 
             for comp in self.components:
                 for pad in getattr(comp, "pads", []):

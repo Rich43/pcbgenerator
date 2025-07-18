@@ -51,6 +51,16 @@ def export_gerbers(board, output_zip_path):
                         else:
                             f.write(f"{line}\n")
 
+        # Board outline layer
+        if getattr(board, "outline_geom", None) is not None:
+            outline_path = temp_dir / "GKO.gbr"
+            with open(outline_path, "w", encoding="utf-8") as f:
+                f.write("G04 GKO *\n")
+                coords = list(board.outline_geom.exterior.coords)
+                for i, (x, y) in enumerate(coords):
+                    code = "D02*" if i == 0 else "D01*"
+                    f.write(f"X{int(x*1000):07d}Y{int(y*1000):07d}{code}\n")
+
         # Drill/hole file
         if getattr(board, "holes", None):
             import math

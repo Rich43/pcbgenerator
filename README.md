@@ -13,7 +13,6 @@ This repository contains the **BoardForge** project, a Python based PCB generato
 ├── output/                            # Generated Gerber previews
 ├── demo.py                            # Demo script
 ├── boardforge.log                     # Example log output
-├── boardforge_project_v46_grokmod.zip # Zipped copy of v46 project
 ├── tests/                             # Pytest suite for BoardForge
 ├── requirements.txt                   # Python dependencies
 └── pytest.ini                         # Pytest configuration

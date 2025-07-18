@@ -121,6 +121,7 @@ Run the script to generate `output/arduino_like.zip` and preview images. See
 - `add_svg_graphic(svg_path, layer, scale=1.0, at=(0,0))`
 - `add_text_ttf(text, font_path, at=(x, y), size=1.0, layer="GTO")`
 - `export_gerbers("output/zipfile.zip")`
+- `save_png_previews(outdir=".", scale=10)`
 
 ### `Component`
 - `add_pin(name, dx, dy)`

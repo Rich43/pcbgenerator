@@ -303,6 +303,95 @@ class Board:
             except Exception as e:
                 print(f"Error writing SVG preview to {output_path}: {e}")
 
+    def save_png_previews(self, outdir=".", scale=10):
+        """Render high-quality PNG previews using Pillow.
+
+        This method draws board geometry directly to PNG images using
+        :mod:`Pillow` and simple geometry helpers inspired by the CuFlow
+        project.  It does not attempt to be a full PCB renderer but provides
+        smoother traces and rotated pads compared to the basic SVG output.
+
+        Parameters
+        ----------
+        outdir : str
+            Directory where the PNGs will be written.
+        scale : int
+            Pixels per mm for the generated images.
+        """
+        os.makedirs(outdir, exist_ok=True)
+        from PIL import Image, ImageDraw, ImageFont
+        from shapely.geometry import box
+        from shapely.affinity import rotate, translate
+
+        width_px = int(self.width * scale)
+        height_px = int(self.height * scale)
+
+        colors = {
+            "board": (93, 34, 146, 255),  # purple board colour
+            "pad": (255, 193, 0, 255),
+            "ring": (255, 236, 128, 255),
+            "trace": (255, 193, 0, 255),
+            "silk": (255, 255, 255, 255),
+        }
+
+        for side, suffix in [("GTO", "top"), ("GBO", "bottom")]:
+            im = Image.new("RGBA", (width_px, height_px), colors["board"])
+            draw = ImageDraw.Draw(im)
+
+            layer = "GTL" if side == "GTO" else "GBL"
+            for trace in self.layers.get(layer, []):
+                if isinstance(trace, tuple) and trace[0] == "TRACE":
+                    p1, p2, w = trace[1], trace[2], trace[3]
+                    draw.line(
+                        [(p1.x * scale, p1.y * scale), (p2.x * scale, p2.y * scale)],
+                        fill=colors["trace"],
+                        width=max(1, int(w * scale)),
+                    )
+                elif isinstance(trace, tuple) and trace[0] == "TRACE_PATH":
+                    pts = [(x * scale, y * scale) for (x, y) in trace[1]]
+                    w = trace[2]
+                    draw.line(pts, fill=colors["trace"], width=max(1, int(w * scale)))
+
+            for comp in self.components:
+                for pad in getattr(comp, "pads", []):
+                    x = pad.x * scale
+                    y = pad.y * scale
+                    w = (getattr(pad, "w", 1.2) or 1.2) * scale
+                    h = (getattr(pad, "h", 1.2) or 1.2) * scale
+                    if abs(w - h) <= scale * 0.1:
+                        ring_r = (w + 6) / 2
+                        pad_r = w / 2
+                        draw.ellipse(
+                            [x - ring_r, y - ring_r, x + ring_r, y + ring_r],
+                            fill=colors["ring"], outline="#333"
+                        )
+                        draw.ellipse(
+                            [x - pad_r, y - pad_r, x + pad_r, y + pad_r],
+                            fill=colors["pad"], outline="#333"
+                        )
+                    else:
+                        poly = box(-w / 2, -h / 2, w / 2, h / 2)
+                        poly = rotate(poly, comp.rotation, origin=(0, 0))
+                        poly = translate(poly, x, y)
+                        draw.polygon(list(poly.exterior.coords), fill=colors["pad"], outline="#333")
+
+            for (text, at, size, lyr) in self._svg_text_calls:
+                if lyr == side:
+                    font_size = max(8, int(15 * size))
+                    try:
+                        font = ImageFont.truetype("DejaVuSans.ttf", font_size)
+                    except Exception:
+                        font = ImageFont.load_default()
+                    draw.text(
+                        (at[0] * scale, at[1] * scale),
+                        text,
+                        fill=colors["silk"],
+                        font=font,
+                    )
+
+            png_path = os.path.join(outdir, f"preview_{suffix}_hi.png")
+            im.save(png_path)
+
 
     def export_gerbers(self, out_path):
         log('ENTER export_gerbers', locals())

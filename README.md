@@ -23,11 +23,13 @@ Log files such as `boardforge.log` may appear when running the demos.
 Example scripts in the `examples/` folder demonstrate advanced usage such as
 the `arduino_like.py` microcontroller board and the
 `buck_boost_converter.py` power module with display and buttons.
-Three scripts, `cuflow_demo.py`, `cuflow_clockpwr.py`, and
-`cuflow_dazzler.py`, are adaptations of examples from
-[James Bowman's CuFlow project](https://github.com/jamesbowman/cuflow).
-These show how similar layouts can be produced using the BoardForge API while
-giving credit to the original CuFlow work.
+The repository also adapts several of
+[James Bowman's CuFlow project](https://github.com/jamesbowman/cuflow)
+examples. Currently `cuflow_demo.py` and `cuflow_clockpwr.py` are available,
+with a forthcoming `cuflow_dazzler.py` that recreates the Dazzler board. These
+scripts translate the original CuFlow commands into BoardForge's higher level
+PCB API, showing how similar layouts can be produced while crediting the
+original CuFlow work.
 
 ## Running the tests
 

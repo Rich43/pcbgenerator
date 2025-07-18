@@ -26,10 +26,10 @@ the `arduino_like.py` microcontroller board and the
 The repository also adapts several of
 [James Bowman's CuFlow project](https://github.com/jamesbowman/cuflow)
 examples. Currently `cuflow_demo.py` and `cuflow_clockpwr.py` are available,
-with a forthcoming `cuflow_dazzler.py` that recreates the Dazzler board. These
-scripts translate the original CuFlow commands into BoardForge's higher level
-PCB API, showing how similar layouts can be produced while crediting the
-original CuFlow work.
+and the `examples/cuflow_dazzler.py` script provides a simplified Dazzler
+adaptation. These scripts translate the original CuFlow commands into
+BoardForge's higher level PCB API, showing how similar layouts can be produced
+while crediting the original CuFlow work.
 
 ## Running the tests
 

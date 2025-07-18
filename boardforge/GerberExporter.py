@@ -50,6 +50,29 @@ def export_gerbers(board, output_zip_path):
                                 f.write(f"X{x2:07d}Y{y2:07d}D01*\n")
                         else:
                             f.write(f"{line}\n")
+
+        # Drill/hole file
+        if getattr(board, "holes", None):
+            import math
+            holes_path = temp_dir / "holes.gbr"
+            with open(holes_path, "w", encoding="utf-8") as f:
+                f.write("G04 holes *\n")
+                for hx, hy, dia, ann in board.holes:
+                    r = dia / 2.0
+                    for i in range(13):
+                        a = 2 * math.pi * i / 12
+                        x = hx + r * math.cos(a)
+                        y = hy + r * math.sin(a)
+                        code = "D02*" if i == 0 else "D01*"
+                        f.write(f"X{int(x*1000):07d}Y{int(y*1000):07d}{code}\n")
+                    if ann is not None:
+                        rr = r + ann
+                        for i in range(13):
+                            a = 2 * math.pi * i / 12
+                            x = hx + rr * math.cos(a)
+                            y = hy + rr * math.sin(a)
+                            code = "D02*" if i == 0 else "D01*"
+                            f.write(f"X{int(x*1000):07d}Y{int(y*1000):07d}{code}\n")
         
         # Save SVG previews if the method exists
         if hasattr(board, 'save_svg_previews'):

@@ -60,8 +60,8 @@ class Board:
         comp = Component(ref, type, at, rotation)
         self.components.append(comp)
         self._ref_map[ref] = comp
-        return comp
         log('EXIT add_component', {'self': self.__dict__})
+        return comp
 
     def trace(self, pin1, pin2, layer="GTL", width=1.0):
         """Add a simple straight trace between two pins."""

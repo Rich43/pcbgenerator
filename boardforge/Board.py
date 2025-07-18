@@ -187,6 +187,35 @@ class Board:
             print(f"TTF render error: {e}")
         log('EXIT add_text_ttf', {'self': self.__dict__})
 
+    def annotate(self, x, y, text, size=1.0, layer=TOP_SILK):
+        """Add an annotation using the bundled RobotoMono font."""
+        font_path = os.path.join(os.path.dirname(__file__), "..", "fonts", "RobotoMono.ttf")
+        if hasattr(layer, "value"):
+            layer = layer.value
+        self.add_text_ttf(text, font_path=font_path, at=(x, y), size=size, layer=layer)
+
+    def logo(self, x, y, image, scale=1.0, layer=TOP_SILK):
+        """Render a Pillow image onto ``layer`` as a simple bitmap graphic."""
+        if hasattr(layer, "value"):
+            layer = layer.value
+        img = image.convert("RGBA")
+        width, height = img.size
+        for j in range(height):
+            for i in range(width):
+                r, g, b, a = img.getpixel((i, j))
+                if a > 0 and (r, g, b) != (255, 255, 255):
+                    sx = x + i * scale
+                    sy = y + j * scale
+                    cmds = [
+                        f"X{int(sx*1000):07d}Y{int(sy*1000):07d}D02*",
+                        f"X{int((sx+scale)*1000):07d}Y{int(sy*1000):07d}D01*",
+                        f"X{int((sx+scale)*1000):07d}Y{int((sy+scale)*1000):07d}D01*",
+                        f"X{int(sx*1000):07d}Y{int((sy+scale)*1000):07d}D01*",
+                        f"X{int(sx*1000):07d}Y{int(sy*1000):07d}D01*",
+                    ]
+                    self.layers[layer].extend(cmds)
+
+
     def design_rule_check(self, min_trace_width=None, min_clearance=None):
         """Check design rules and raise :class:`~boardforge.drc.DRCError` on failures.
 

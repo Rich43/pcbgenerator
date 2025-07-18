@@ -5,7 +5,7 @@ from .Via import Via
 from .Graphic import Graphic
 from .Board import Board
 from .Zone import Zone
-from .drc import check_board
+from .drc import check_board, DRCError
 from .rules import LAYER_SERVICE_RULES
 from .circuits import (
     create_voltage_divider,
@@ -58,5 +58,6 @@ __all__ = [
     "TOP_SILK",
     "BOTTOM_SILK",
     "check_board",
+    "DRCError",
     "LAYER_SERVICE_RULES",
 ]

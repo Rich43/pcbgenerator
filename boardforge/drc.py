@@ -1,5 +1,13 @@
 """Design Rule Checking utilities."""
 
+class DRCError(Exception):
+    """Raised when a design rule violation is detected."""
+
+    def __init__(self, warnings):
+        message = "; ".join(warnings)
+        super().__init__(message)
+        self.warnings = warnings
+
 import math
 from typing import List
 

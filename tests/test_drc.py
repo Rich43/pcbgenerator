@@ -5,7 +5,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 import pytest
-from boardforge import Board
+from boardforge import Board, DRCError
 
 
 def test_drc_pad_clearance_warning():
@@ -19,8 +19,9 @@ def test_drc_pad_clearance_warning():
     c2.add_pin("P", dx=0, dy=0)
     c2.add_pad("P", dx=0, dy=0, w=1, h=1)
 
-    warnings = board.design_rule_check(min_clearance=0.7)
-    assert any("Pad clearance" in w for w in warnings)
+    with pytest.raises(DRCError) as excinfo:
+        board.design_rule_check(min_clearance=0.7)
+    assert any("Pad clearance" in w for w in excinfo.value.warnings)
 
 
 def test_drc_trace_width_warning():
@@ -35,8 +36,9 @@ def test_drc_trace_width_warning():
     c2.add_pad("P", dx=0, dy=0, w=1, h=1)
 
     board.trace(c1.pin("P"), c2.pin("P"), width=0.1)
-    warnings = board.design_rule_check(min_trace_width=0.15)
-    assert any("width" in w for w in warnings)
+    with pytest.raises(DRCError) as excinfo:
+        board.design_rule_check(min_trace_width=0.15)
+    assert any("width" in w for w in excinfo.value.warnings)
 
 
 def test_export_raises_on_drc_failure(tmp_path):
@@ -51,7 +53,7 @@ def test_export_raises_on_drc_failure(tmp_path):
     c2.add_pad("P", dx=0, dy=0, w=1, h=1)
 
     zip_path = tmp_path / "out.zip"
-    with pytest.raises(RuntimeError):
+    with pytest.raises(DRCError):
         board.export_gerbers(zip_path)
 
 
@@ -67,8 +69,9 @@ def test_drc_uses_layer_service_defaults():
     c2.add_pad("P", dx=0, dy=0, w=1, h=1)
 
     board.trace(c1.pin("P"), c2.pin("P"), width=0.1)
-    warnings = board.design_rule_check()
-    assert any("width" in w for w in warnings)
+    with pytest.raises(DRCError) as excinfo:
+        board.design_rule_check()
+    assert any("width" in w for w in excinfo.value.warnings)
 
 
 def test_via_rules_enforced():
@@ -76,6 +79,7 @@ def test_via_rules_enforced():
     board.set_layer_stack(["GTL", "GBL"])
     board.add_via(1, 1, diameter=0.3, hole=0.2)
     board.add_via(1.2, 1, diameter=0.3, hole=0.2)
-    warnings = board.design_rule_check()
-    assert any("Via" in w for w in warnings)
+    with pytest.raises(DRCError) as excinfo:
+        board.design_rule_check()
+    assert any("Via" in w for w in excinfo.value.warnings)
 

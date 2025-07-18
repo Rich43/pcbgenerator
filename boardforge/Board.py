@@ -146,7 +146,7 @@ class Board:
         log('EXIT add_text_ttf', {'self': self.__dict__})
 
     def design_rule_check(self, min_trace_width=None, min_clearance=None):
-        """Return a list of DRC warnings for the board.
+        """Check design rules and raise :class:`~boardforge.drc.DRCError` on failures.
 
         If ``min_trace_width`` or ``min_clearance`` are not provided, values
         from :data:`LAYER_SERVICE_RULES` corresponding to ``self.layer_service``
@@ -184,12 +184,16 @@ class Board:
         if min_clearance is None:
             min_clearance = 0.15
 
-        return check_board(
+        warnings = check_board(
             self,
             min_trace_width=min_trace_width,
             min_clearance=min_clearance,
             **{k: v for k, v in extra.items() if v}
         )
+        if warnings:
+            from .drc import DRCError
+            raise DRCError(warnings)
+        return []
 
     def save_svg_previews(self, outdir="."):
         log('ENTER save_svg_previews', locals())
@@ -303,11 +307,7 @@ class Board:
     def export_gerbers(self, out_path):
         log('ENTER export_gerbers', locals())
         log("export_gerbers called")
-        warnings = self.design_rule_check()
-        if warnings:
-            log("DRC failure", {"warnings": warnings})
-            joined = "; ".join(warnings)
-            raise RuntimeError(f"Design rule check failed: {joined}")
+        self.design_rule_check()
         export_gerbers(self, out_path)
 
     def export_all(self, out_path):

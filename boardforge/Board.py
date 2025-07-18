@@ -1,6 +1,7 @@
 from .Component import Component
 from .GerberExporter import export_gerbers
 from .drc import check_board
+from .rules import LAYER_SERVICE_RULES
 from .Pin import Pin
 from .Via import Via
 from .Zone import Zone
@@ -23,13 +24,15 @@ def log(msg, obj=None):
 
 class Board:
 
-    def __init__(self, name="Board", width=100, height=80):
+    def __init__(self, name="Board", width=100, height=80, layer_service="2 Layer Services"):
         log('ENTER __init__', locals())
         log("Board __init__ called")
         self.name = name
         self.width = width
         self.height = height
         self.components = []
+        # Manufacturing ruleset to enforce during design rule checks
+        self.layer_service = layer_service
         # Map reference designators to components for quick lookup
         self._ref_map = {}
         # Containers for vias and filled zones
@@ -142,8 +145,38 @@ class Board:
             print(f"TTF render error: {e}")
         log('EXIT add_text_ttf', {'self': self.__dict__})
 
-    def design_rule_check(self, min_trace_width=0.15, min_clearance=0.15):
-        """Return a list of DRC warnings for the board."""
+    def design_rule_check(self, min_trace_width=None, min_clearance=None):
+        """Return a list of DRC warnings for the board.
+
+        If ``min_trace_width`` or ``min_clearance`` are not provided, values
+        from :data:`LAYER_SERVICE_RULES` corresponding to ``self.layer_service``
+        will be used when available.
+        """
+
+        def _parse(value):
+            if isinstance(value, (int, float)):
+                return float(value)
+            if isinstance(value, str):
+                lowered = value.lower()
+                if lowered in {"any", "user preference"}:
+                    return 0.0
+                m = re.search(r"([0-9.]+)mm", value)
+                if m:
+                    return float(m.group(1))
+            return 0.0
+
+        if (min_trace_width is None or min_clearance is None) and self.layer_service in LAYER_SERVICE_RULES:
+            rules = LAYER_SERVICE_RULES[self.layer_service]
+            if min_trace_width is None:
+                min_trace_width = _parse(rules.get("Minimum track Width", 0))
+            if min_clearance is None:
+                min_clearance = _parse(rules.get("Minimum Clearance", 0))
+
+        if min_trace_width is None:
+            min_trace_width = 0.15
+        if min_clearance is None:
+            min_clearance = 0.15
+
         return check_board(self, min_trace_width=min_trace_width, min_clearance=min_clearance)
 
     def save_svg_previews(self, outdir="."):

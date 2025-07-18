@@ -54,3 +54,19 @@ def test_export_raises_on_drc_failure(tmp_path):
     with pytest.raises(RuntimeError):
         board.export_gerbers(zip_path)
 
+
+def test_drc_uses_layer_service_defaults():
+    board = Board(width=5, height=5)
+    board.set_layer_stack(["GTL", "GBL"])
+    c1 = board.add_component("A", ref="U1", at=(0, 0))
+    c1.add_pin("P", dx=0, dy=0)
+    c1.add_pad("P", dx=0, dy=0, w=1, h=1)
+
+    c2 = board.add_component("B", ref="U2", at=(4, 0))
+    c2.add_pin("P", dx=0, dy=0)
+    c2.add_pad("P", dx=0, dy=0, w=1, h=1)
+
+    board.trace(c1.pin("P"), c2.pin("P"), width=0.1)
+    warnings = board.design_rule_check()
+    assert any("width" in w for w in warnings)
+

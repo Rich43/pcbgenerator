@@ -35,9 +35,10 @@ class Board:
         self.layer_service = layer_service
         # Map reference designators to components for quick lookup
         self._ref_map = {}
-        # Containers for vias and filled zones
+        # Containers for vias, filled zones, and non-plated holes
         self.vias = []
         self.zones = []
+        self.holes = []
         self.layers = {"GTO": [], "GBO": []}
         self._svg_text_calls = []
         self._svg_graphics_calls = []
@@ -119,6 +120,21 @@ class Board:
         zone = Zone(net, layer)
         self.zones.append(zone)
         return zone
+
+    def hole(self, xy, diameter, annulus=None):
+        """Record a non-plated hole location.
+
+        Parameters
+        ----------
+        xy : tuple
+            ``(x, y)`` coordinates of the hole centre.
+        diameter : float
+            Diameter of the hole in mm.
+        annulus : float, optional
+            Optional copper ring around the hole.
+        """
+        self.holes.append((xy[0], xy[1], diameter, annulus))
+        return (xy[0], xy[1], diameter, annulus)
 
     def add_svg_graphic(self, svg_path, layer, scale=1.0, at=(0, 0)):
         log('ENTER add_svg_graphic', locals())
@@ -207,7 +223,8 @@ class Board:
             "pad": "#ffc100",    # Gold
             "ring": "#ffec80",   # Lighter gold for through-hole rings
             "trace": "#ffc100",  # Gold
-            "silk": "#ffffff"    # White
+            "silk": "#ffffff",   # White
+            "hole": "#000000",   # Black for board holes
         }
 
         for side, suffix in [("GTO", "top"), ("GBO", "bottom")]:
@@ -253,6 +270,20 @@ class Board:
                         svg_elements.append(
                             f'<rect x="{x-w//2}" y="{y-h//2}" width="{w}" height="{h}" fill="{colors["pad"]}" stroke="#333" stroke-width="2" transform="rotate({comp.rotation},{x},{y})"/>'
                         )
+
+            # Board holes drawn above pads
+            for hx, hy, dia, ann in self.holes:
+                x = int(hx * 10)
+                y = int(hy * 10)
+                r = int((dia / 2) * 10)
+                if ann is not None:
+                    ring_r = int(((dia / 2) + ann) * 10)
+                    svg_elements.append(
+                        f'<circle cx="{x}" cy="{y}" r="{ring_r}" fill="{colors["ring"]}" stroke="#333" stroke-width="1"/>'
+                    )
+                svg_elements.append(
+                    f'<circle cx="{x}" cy="{y}" r="{r}" fill="{colors["hole"]}" stroke="#333" stroke-width="1"/>'
+                )
 
             # Silkscreen text from _svg_text_calls
             for (text, at, size, lyr) in self._svg_text_calls:
@@ -332,6 +363,7 @@ class Board:
             "ring": (255, 236, 128, 255),
             "trace": (255, 193, 0, 255),
             "silk": (255, 255, 255, 255),
+            "hole": (0, 0, 0, 255),
         }
 
         for side, suffix in [("GTO", "top"), ("GBO", "bottom")]:
@@ -374,6 +406,21 @@ class Board:
                         poly = rotate(poly, comp.rotation, origin=(0, 0))
                         poly = translate(poly, x, y)
                         draw.polygon(list(poly.exterior.coords), fill=colors["pad"], outline="#333")
+
+            for hx, hy, dia, ann in self.holes:
+                x = hx * scale
+                y = hy * scale
+                r = (dia / 2) * scale
+                if ann is not None:
+                    ring_r = ((dia / 2) + ann) * scale
+                    draw.ellipse(
+                        [x - ring_r, y - ring_r, x + ring_r, y + ring_r],
+                        fill=colors["ring"], outline="#333"
+                    )
+                draw.ellipse(
+                    [x - r, y - r, x + r, y + r],
+                    fill=colors["hole"], outline="#333"
+                )
 
             for (text, at, size, lyr) in self._svg_text_calls:
                 if lyr == side:

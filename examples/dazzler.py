@@ -91,7 +91,7 @@ def build_board():
     board.fill([(5, 5), (w-5, 5), (w-5, h-5), (5, h-5)], layer=Layer.BOTTOM_COPPER.value)
 
     # Silkscreen text and graphics
-    board.annotate(5, 38, "Dazzler Mega", size=1.5, layer=Layer.TOP_SILK)
+    board.annotate(5, 38, "Dazzler", size=1.5, layer=Layer.TOP_SILK)
     board.add_text_ttf("Mega Example", font_path=str(FONT_PATH), at=(10, h/2), size=1.5, layer=Layer.TOP_SILK.value)
     if GRAPHIC_PATH.exists():
         board.add_svg_graphic(str(GRAPHIC_PATH), layer=Layer.TOP_SILK.value, scale=0.5, at=(2, 2))
@@ -106,7 +106,7 @@ def build_board():
 def main():
     board = build_board()
     board.save_svg_previews(str(OUTPUT_DIR))
-    board.export_gerbers(OUTPUT_DIR / "dazzler_mega.zip")
+    board.export_gerbers(OUTPUT_DIR / "dazzler.zip")
 
 
 if __name__ == "__main__":

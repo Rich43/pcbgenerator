@@ -7,11 +7,8 @@ __all__ = [
     "bent_trace",
     "buck_boost_converter",
     "cuflow_clockpwr",
-    "cuflow_dazzler",
     "cuflow_demo",
-    "dazzler_full",
-    "dazzler_advanced",
-    "dazzler_mega",
+    "dazzler",
     "esp32_dev_board",
 ]
 

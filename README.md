@@ -33,6 +33,8 @@ with mounting holes, copper fills and silkscreen graphics. The
 every edge of a chamfered 50×42 mm board. These scripts translate the original
 CuFlow commands into BoardForge's higher level PCB API, showing how similar
 layouts can be produced while crediting the original CuFlow work.
+The new `examples/dazzler_mega.py` merges all of these demos into one
+comprehensive script.
 
 ## Running the tests
 

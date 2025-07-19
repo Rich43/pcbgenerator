@@ -35,12 +35,13 @@ CuFlow work.
 
 ## Running the tests
 
-Install the dependencies and execute the test suite:
+Install the dependencies before running the test suite:
 
 ```bash
 pip install -r requirements.txt
 pytest
 ```
+An optional `requirements-dev.txt` pins the package versions used in CI.
 
 ## License
 

@@ -28,12 +28,14 @@ pip install -r requirements.txt
 
 ### Testing
 
-The tests are executed with `pytest`.  The `pytest-timeout` plugin is enabled
+The tests are executed with `pytest`. Be sure to install the dependencies first
+using `pip install -r requirements.txt`. The `pytest-timeout` plugin is enabled
 so each test is limited to five seconds.
 
 ```bash
 pytest
 ```
+An optional `requirements-dev.txt` pins the package versions used in CI.
 
 ## 📁 Folder Structure
 ```

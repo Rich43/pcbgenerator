@@ -128,6 +128,33 @@ class Board:
         self.outline_geom = Polygon(points)
         return self.outline_geom
 
+    def chamfer_outline(self, width, height, chamfer):
+        """Create a chamfered rectangular outline.
+
+        Parameters
+        ----------
+        width : float
+            Overall board width.
+        height : float
+            Overall board height.
+        chamfer : float
+            Offset distance from each corner for the chamfer.
+        """
+        self.width = width
+        self.height = height
+        pts = [
+            (chamfer, 0),
+            (width - chamfer, 0),
+            (width, chamfer),
+            (width, height - chamfer),
+            (width - chamfer, height),
+            (chamfer, height),
+            (0, height - chamfer),
+            (0, chamfer),
+        ]
+        self.outline_geom = Polygon(pts)
+        return self.outline_geom
+
     def oversize(self, margin):
         """Expand the stored outline by ``margin`` mm."""
         if self.outline_geom is None:

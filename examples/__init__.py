@@ -11,6 +11,7 @@ __all__ = [
     "cuflow_demo",
     "dazzler_full",
     "dazzler_advanced",
+    "dazzler_mega",
     "esp32_dev_board",
 ]
 

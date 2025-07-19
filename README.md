@@ -28,10 +28,11 @@ The repository also adapts several of
 examples. Currently `cuflow_demo.py` and `cuflow_clockpwr.py` are available.
 The `examples/cuflow_dazzler.py` script provides a simplified Dazzler
 adaptation, while `examples/dazzler_full.py` demonstrates a more complete port
-with mounting holes, copper fills and silkscreen graphics. These scripts
-translate the original CuFlow commands into BoardForge's higher level PCB API,
-showing how similar layouts can be produced while crediting the original
-CuFlow work.
+with mounting holes, copper fills and silkscreen graphics. The
+`examples/dazzler_advanced.py` demo combines these ideas with rows of pads on
+every edge of a chamfered 50×42 mm board. These scripts translate the original
+CuFlow commands into BoardForge's higher level PCB API, showing how similar
+layouts can be produced while crediting the original CuFlow work.
 
 ## Running the tests
 

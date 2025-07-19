@@ -31,6 +31,17 @@ a single comprehensive example. These scripts translate the original CuFlow
 commands into BoardForge's higher level PCB API, showing how similar layouts
 can be produced while crediting the original CuFlow work.
 
+## Setup scripts
+
+Scripts in the `scripts/` folder help install Python 3 and the required packages.
+Run the script that matches your platform from the repository root:
+
+- `scripts/setup_linux.sh` – for Linux distributions using apt, yum, dnf, pacman or zypper
+- `scripts/setup_mac.sh` – for macOS using Homebrew
+- `scripts/setup_windows.bat` – for Windows using winget or Chocolatey
+
+Each script checks for Python 3 and then installs `requirements.txt`.
+
 ## Running the tests
 
 Install the dependencies before running the test suite:

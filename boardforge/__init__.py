@@ -4,6 +4,9 @@ from .Component import Component
 from .Via import Via
 from .Graphic import Graphic
 from .Board import Board
+
+# Expose useful Board helper methods at module level
+chamfer_outline = Board.chamfer_outline
 from .Zone import Zone
 from .drc import check_board, DRCError
 from .rules import LAYER_SERVICE_RULES
@@ -55,6 +58,7 @@ __all__ = [
     "create_led_indicator",
     "create_rc_lowpass",
     "create_bent_trace",
+    "chamfer_outline",
     "TOP_SILK",
     "BOTTOM_SILK",
     "check_board",

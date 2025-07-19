@@ -18,12 +18,7 @@ def build_board():
     ])
 
     w, h, ch = 50, 42, 3
-    outline = [
-        (ch, 0), (w - ch, 0), (w, ch),
-        (w, h - ch), (w - ch, h), (ch, h),
-        (0, h - ch), (0, ch),
-    ]
-    board.outline(outline)
+    board.chamfer_outline(w, h, ch)
 
     for x, y in [(3, 3), (w - 3, 3), (w - 3, h - 3), (3, h - 3)]:
         board.hole((x, y), diameter=2.5)

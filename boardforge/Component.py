@@ -32,3 +32,10 @@ class Component:
 
     def pin(self, name):
         return self.pins.get(name)
+
+    def load_footprint(self, name):
+        """Populate this component using a named footprint."""
+        from .footprints import get_footprint
+        loader = get_footprint(name)
+        loader(self)
+        return self

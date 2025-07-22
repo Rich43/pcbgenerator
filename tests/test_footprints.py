@@ -19,6 +19,10 @@ from boardforge.__init__ import Footprint
     (Footprint.USB_C_CUTOUT.value, (4, [(-3.5, 0), (3.5, 0)])),
     (Footprint.ESP32_WROOM.value, (38, [(-9.0, -18.0), (9.0, 18.0)])),
     ("HDMI", (23, [(-4.5, 0), (4.5, 2.4)])),
+    (Footprint.BT815.value, (48, [(-3.5, -2.75), (-2.75, -3.5)])),
+    (Footprint.W25Q64J.value, (8, [(-2.7, -1.905), (2.7, -1.905)])),
+    (Footprint.OSCILLATOR.value, (4, [(-1.0, 0.8), (1.0, -0.8)])),
+    (Footprint.SOT23_5.value, (5, [(-0.95, -0.8), (0.475, 0.8)])),
 ])
 def test_footprint_pads(name, expected):
     count, locs = expected

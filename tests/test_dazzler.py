@@ -26,3 +26,8 @@ def test_dazzler_board(tmp_path):
             "preview_top.png",
             "preview_bottom.png",
         }.issubset(names)
+
+    with open(tmp_path / "preview_top.svg", "r", encoding="utf-8") as f:
+        data = f.read()
+        assert "GD3X" in data
+        assert "polygon" in data and "fill=\"white\"" in data

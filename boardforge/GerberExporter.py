@@ -1,6 +1,7 @@
 import os
 import zipfile
 import shutil
+import math
 from pathlib import Path
 
 def export_gerbers(board, output_zip_path):
@@ -39,15 +40,44 @@ def export_gerbers(board, output_zip_path):
                             f.write(f"X{x1:07d}Y{y1:07d}D02*\n")
                             f.write(f"X{x2:07d}Y{y2:07d}D01*\n")
                         elif isinstance(line, tuple) and line[0] == "TRACE_PATH":
-                            pts = line[1]
-                            # line[2] may contain width
-                            for i in range(len(pts) - 1):
-                                x1 = int(pts[i][0] * 1000)
-                                y1 = int(pts[i][1] * 1000)
-                                x2 = int(pts[i + 1][0] * 1000)
-                                y2 = int(pts[i + 1][1] * 1000)
-                                f.write(f"X{x1:07d}Y{y1:07d}D02*\n")
-                                f.write(f"X{x2:07d}Y{y2:07d}D01*\n")
+                            segments = line[1]
+                            for seg in segments:
+                                if seg[0] == "LINE":
+                                    s, e = seg[1], seg[2]
+                                    x1 = int(s[0] * 1000)
+                                    y1 = int(s[1] * 1000)
+                                    x2 = int(e[0] * 1000)
+                                    y2 = int(e[1] * 1000)
+                                    f.write(f"X{x1:07d}Y{y1:07d}D02*\n")
+                                    f.write(f"X{x2:07d}Y{y2:07d}D01*\n")
+                                elif seg[0] == "ARC":
+                                    s, e, r, ang = seg[1], seg[2], seg[3], seg[4]
+                                    params = board._arc_params(s, e, r, ang)
+                                    if params is not None:
+                                        cx, cy, a1, a2 = params
+                                        steps = max(8, int(abs(ang) / 10))
+                                        for i in range(steps + 1):
+                                            t = a1 + (a2 - a1) * i / steps
+                                            rad = math.radians(t)
+                                            x = cx + r * math.cos(rad)
+                                            y = cy + r * math.sin(rad)
+                                            code = "D02*" if i == 0 else "D01*"
+                                            f.write(f"X{int(x*1000):07d}Y{int(y*1000):07d}{code}\n")
+                                elif seg[0] == "BEZIER":
+                                    from svg.path import CubicBezier
+                                    s, c1, c2, e = seg[1], seg[2], seg[3], seg[4]
+                                    cb = CubicBezier(complex(*s), complex(*c1), complex(*c2), complex(*e))
+                                    steps = 20
+                                    prev = cb.point(0)
+                                    for i in range(1, steps + 1):
+                                        pt = cb.point(i / steps)
+                                        x1 = int(prev.real * 1000)
+                                        y1 = int(prev.imag * 1000)
+                                        x2 = int(pt.real * 1000)
+                                        y2 = int(pt.imag * 1000)
+                                        f.write(f"X{x1:07d}Y{y1:07d}D02*\n")
+                                        f.write(f"X{x2:07d}Y{y2:07d}D01*\n")
+                                        prev = pt
                         else:
                             f.write(f"{line}\n")
 
@@ -63,7 +93,6 @@ def export_gerbers(board, output_zip_path):
 
         # Drill/hole file
         if getattr(board, "holes", None):
-            import math
             holes_path = temp_dir / "holes.gbr"
             with open(holes_path, "w", encoding="utf-8") as f:
                 f.write("G04 holes *\n")

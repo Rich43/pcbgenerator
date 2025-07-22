@@ -46,6 +46,31 @@ class Board:
         self._svg_graphics_calls = []
         log('EXIT __init__', {'self': self.__dict__})
 
+    @staticmethod
+    def _arc_params(start, end, radius, sweep):
+        """Return centre coordinates and angles for an arc."""
+        x1, y1 = start
+        x2, y2 = end
+        dx = x2 - x1
+        dy = y2 - y1
+        chord = math.hypot(dx, dy)
+        if chord == 0 or 2 * radius < chord:
+            return None
+        midx = (x1 + x2) / 2
+        midy = (y1 + y2) / 2
+        h = math.sqrt(max(radius * radius - (chord / 2) ** 2, 0))
+        ux = -dy / chord
+        uy = dx / chord
+        if sweep > 0:
+            cx = midx + ux * h
+            cy = midy + uy * h
+        else:
+            cx = midx - ux * h
+            cy = midy - uy * h
+        start_ang = math.degrees(math.atan2(y1 - cy, x1 - cx))
+        end_ang = start_ang + sweep
+        return (cx, cy, start_ang, end_ang)
+
     def set_layer_stack(self, layers):
         log('ENTER set_layer_stack', locals())
         log("set_layer_stack called")
@@ -91,25 +116,57 @@ class Board:
         self.trace_path(pts, layer=layer, width=width)
 
     def trace_path(self, points, layer="GTL", width=1.0):
-        """Add a trace with intermediate bends.
+        """Add a trace with optional arcs or Bezier curves.
 
         Parameters
         ----------
         points : list
-            Sequence of coordinates or Pin objects.  Each element should
-            provide ``x`` and ``y`` attributes or be a ``(x, y)`` tuple.
-            Consecutive points will be connected with straight segments.
+            Sequence defining the path. Items may be coordinate tuples/objects
+            or dictionaries specifying an ``{"arc": (radius, sweep)}`` or
+            ``{"bezier": ((cx1, cy1), (cx2, cy2))}`` between the previous and
+            next coordinate.
         layer : str
-            Board layer to place the trace on. Defaults to "GTL".
+            Board layer to place the trace on. Defaults to ``"GTL"``.
+        width : float
+            Trace width in mm.
         """
-        processed = []
-        for p in points:
-            if hasattr(p, "x") and hasattr(p, "y"):
-                processed.append((p.x, p.y))
-            else:
-                processed.append((p[0], p[1]))
-        if len(processed) >= 2:
-            self.layers[layer].append(("TRACE_PATH", processed, width))
+
+        def _get_xy(item):
+            if hasattr(item, "x") and hasattr(item, "y"):
+                return (item.x, item.y)
+            return (item[0], item[1])
+
+        segments = []
+        if not points:
+            return
+
+        prev = _get_xy(points[0])
+        i = 1
+        while i < len(points):
+            item = points[i]
+            if isinstance(item, dict) and "arc" in item:
+                radius, sweep = item["arc"]
+                i += 1
+                end = _get_xy(points[i])
+                segments.append(("ARC", prev, end, radius, sweep))
+                prev = end
+                i += 1
+                continue
+            if isinstance(item, dict) and "bezier" in item:
+                ctrl1, ctrl2 = item["bezier"]
+                i += 1
+                end = _get_xy(points[i])
+                segments.append(("BEZIER", prev, ctrl1, ctrl2, end))
+                prev = end
+                i += 1
+                continue
+            end = _get_xy(item)
+            segments.append(("LINE", prev, end))
+            prev = end
+            i += 1
+
+        if segments:
+            self.layers[layer].append(("TRACE_PATH", segments, width))
 
     def add_via(self, x, y, from_layer="GTL", to_layer="GBL", diameter=0.6, hole=0.3):
         """Create a via connecting two layers."""
@@ -357,12 +414,39 @@ class Board:
                         f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="{colors["trace"]}" stroke-width="4"/>'
                     )
                 elif isinstance(trace, tuple) and trace[0] == "TRACE_PATH":
-                    pts = trace[1]
-                    for i in range(len(pts) - 1):
-                        x1, y1 = int(pts[i][0] * 10), int(pts[i][1] * 10)
-                        x2, y2 = int(pts[i + 1][0] * 10), int(pts[i + 1][1] * 10)
+                    segments = trace[1]
+                    width = trace[2]
+                    path_cmds = []
+                    move_done = False
+                    for seg in segments:
+                        if seg[0] == "LINE":
+                            start, end = seg[1], seg[2]
+                            if not move_done:
+                                path_cmds.append(f'M{int(start[0]*10)},{int(start[1]*10)}')
+                                move_done = True
+                            path_cmds.append(f'L{int(end[0]*10)},{int(end[1]*10)}')
+                        elif seg[0] == "ARC":
+                            start, end, r, ang = seg[1], seg[2], seg[3], seg[4]
+                            large = 1 if abs(ang) > 180 else 0
+                            sweep = 1 if ang > 0 else 0
+                            if not move_done:
+                                path_cmds.append(f'M{int(start[0]*10)},{int(start[1]*10)}')
+                                move_done = True
+                            path_cmds.append(
+                                f"A{int(r*10)},{int(r*10)} 0 {large},{sweep} {int(end[0]*10)},{int(end[1]*10)}"
+                            )
+                        elif seg[0] == "BEZIER":
+                            start, c1, c2, end = seg[1], seg[2], seg[3], seg[4]
+                            if not move_done:
+                                path_cmds.append(f'M{int(start[0]*10)},{int(start[1]*10)}')
+                                move_done = True
+                            path_cmds.append(
+                                f"C{int(c1[0]*10)},{int(c1[1]*10)} {int(c2[0]*10)},{int(c2[1]*10)} {int(end[0]*10)},{int(end[1]*10)}"
+                            )
+                    if path_cmds:
+                        d = ' '.join(path_cmds)
                         svg_elements.append(
-                            f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="{colors["trace"]}" stroke-width="4"/>'
+                            f'<path d="{d}" stroke="{colors["trace"]}" stroke-width="{max(1,int(width*4))}" fill="none"/>'
                         )
 
             # Filled zones
@@ -556,9 +640,39 @@ class Board:
                         width=max(1, int(w * scale)),
                     )
                 elif isinstance(trace, tuple) and trace[0] == "TRACE_PATH":
-                    pts = [(x * scale, y * scale) for (x, y) in trace[1]]
+                    segments = trace[1]
                     w = trace[2]
-                    draw.line(pts, fill=colors["trace"], width=max(1, int(w * scale)))
+                    for seg in segments:
+                        if seg[0] == "LINE":
+                            s, e = seg[1], seg[2]
+                            draw.line(
+                                [(s[0] * scale, s[1] * scale), (e[0] * scale, e[1] * scale)],
+                                fill=colors["trace"],
+                                width=max(1, int(w * scale)),
+                            )
+                        elif seg[0] == "ARC":
+                            s, e, r, ang = seg[1], seg[2], seg[3], seg[4]
+                            params = self._arc_params(s, e, r, ang)
+                            if params is not None:
+                                cx, cy, a1, a2 = params
+                                bbox = [
+                                    (cx - r) * scale,
+                                    (cy - r) * scale,
+                                    (cx + r) * scale,
+                                    (cy + r) * scale,
+                                ]
+                                draw.arc(bbox, start=a1, end=a2, fill=colors["trace"], width=max(1, int(w * scale)))
+                        elif seg[0] == "BEZIER":
+                            from svg.path import CubicBezier
+                            s, c1, c2, e = seg[1], seg[2], seg[3], seg[4]
+                            cb = CubicBezier(complex(*s), complex(*c1), complex(*c2), complex(*e))
+                            steps = 20
+                            pts = [cb.point(t / steps) for t in range(steps + 1)]
+                            draw.line(
+                                [(pt.real * scale, pt.imag * scale) for pt in pts],
+                                fill=colors["trace"],
+                                width=max(1, int(w * scale)),
+                            )
 
             for zone in self.zones:
                 if zone.layer == layer and zone.geometry is not None:

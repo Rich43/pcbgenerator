@@ -11,6 +11,10 @@ from .sot223 import apply as _sot223
 from .usb_c_cutout import apply as _usb_c_cutout
 from .esp32_wroom import apply as _esp32_wroom
 from .hdmi import apply as _hdmi
+from .bt815 import apply as _bt815
+from .w25q64j import apply as _w25q64j
+from .oscillator import apply as _oscillator
+from .sot23_5 import apply as _sot23_5
 
 
 _MAPPING = {
@@ -22,6 +26,10 @@ _MAPPING = {
     Footprint.USB_C_CUTOUT.value: _usb_c_cutout,
     Footprint.ESP32_WROOM.value: _esp32_wroom,
     "HDMI": _hdmi,
+    Footprint.BT815.value: _bt815,
+    Footprint.W25Q64J.value: _w25q64j,
+    Footprint.OSCILLATOR.value: _oscillator,
+    Footprint.SOT23_5.value: _sot23_5,
 }
 
 

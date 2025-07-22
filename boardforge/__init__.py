@@ -41,6 +41,11 @@ class Footprint(Enum):
     C0603 = "C0603"
     TACTILE_SWITCH = "TACTILE_SWITCH"
     HEADER_1x5 = "HEADER_1x5"
+    HDMI = "HDMI"
+    BT815 = "BT815"
+    W25Q64J = "W25Q64J"
+    OSCILLATOR = "OSCILLATOR"
+    SOT23_5 = "SOT23_5"
 
 
 __all__ = [

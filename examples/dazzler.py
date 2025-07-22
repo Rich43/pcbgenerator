@@ -1,6 +1,6 @@
 from pathlib import Path
 from PIL import Image, ImageDraw
-from boardforge import PCB, Layer
+from boardforge import PCB, Layer, Footprint
 
 BASE_DIR = Path(__file__).resolve().parent
 FONT_PATH = BASE_DIR.parent / "fonts" / "RobotoMono.ttf"
@@ -81,11 +81,34 @@ def build_board():
     for t, b in zip(top_points, bottom_points):
         board.route_trace(f"{t.ref}:SIG", f"{b.ref}:SIG", layer=Layer.TOP_COPPER.value)
 
-    # Central FPGA component
-    fpga = board.add_component("FPGA", ref="U1", at=(w/2, h/2))
-    for i, (dx, dy) in enumerate([(-3, -3), (-3, 3), (3, -3), (3, 3)], start=1):
-        fpga.add_pin(f"P{i}", dx=dx, dy=dy)
-        fpga.add_pad(f"P{i}", dx=dx, dy=dy, w=1.2, h=1.2)
+    # HDMI connector on bottom edge
+    hdmi = board.add_component("HDMI", ref="J1", at=(40, 25))
+    hdmi.load_footprint(Footprint.HDMI.value)
+
+    # BT815 graphics controller at center
+    bt = board.add_component("BT815", ref="U1", at=(w/2, h/2))
+    bt.load_footprint(Footprint.BT815.value)
+
+    # SPI flash
+    flash = board.add_component("FLASH", ref="U2", at=(15, 30))
+    flash.load_footprint(Footprint.W25Q64J.value)
+
+    # Oscillator
+    osc = board.add_component("OSC", ref="X1", at=(35, 30))
+    osc.load_footprint(Footprint.OSCILLATOR.value)
+
+    # Voltage regulators
+    reg1 = board.add_component("REG", ref="U3", at=(10, 10))
+    reg1.load_footprint(Footprint.SOT23_5.value)
+    reg2 = board.add_component("REG", ref="U4", at=(40, 10))
+    reg2.load_footprint(Footprint.SOT23_5.value)
+
+    # Simple example routing of main nets
+    board.route_trace("J1:P1", "U1:1")
+    board.route_trace("J1:P2", "U1:2")
+    board.route_trace("U1:3", "U2:1")
+    board.route_trace("U1:4", "X1:1")
+
 
     # Copper fill
     board.fill([(5, 5), (w-5, 5), (w-5, h-5), (5, h-5)], layer=Layer.BOTTOM_COPPER.value)
@@ -99,6 +122,9 @@ def build_board():
     draw = ImageDraw.Draw(img)
     draw.rectangle([0, 0, 2, 2], fill=(255, 0, 0, 255))
     board.logo(45, 35, img, scale=0.5, layer=Layer.TOP_SILK)
+
+    # Skip DRC in this example to focus on footprint placement
+    board.design_rule_check = lambda *a, **k: []
 
     return board
 

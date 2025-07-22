@@ -44,13 +44,17 @@ Each script checks for Python 3 and then installs `requirements.txt`.
 
 ## Running the tests
 
-Install the dependencies before running the test suite:
+Install the packages listed in `requirements.txt` before executing the test
+suite:
 
 ```bash
 pip install -r requirements.txt
 pytest
 ```
-An optional `requirements-dev.txt` pins the package versions used in CI.
+
+The example scripts require additional libraries such as **Pillow**,
+**CairoSVG** and **Shapely**, which are included in the dependency file. An
+optional `requirements-dev.txt` pins the package versions used in CI.
 
 ## License
 

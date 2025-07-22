@@ -1,10 +1,11 @@
 from pathlib import Path
-from PIL import Image, ImageDraw
 from boardforge import PCB, Layer, Footprint
 
 BASE_DIR = Path(__file__).resolve().parent
 FONT_PATH = BASE_DIR.parent / "fonts" / "RobotoMono.ttf"
-GRAPHIC_PATH = BASE_DIR.parent / "graphics" / "torch.svg"
+TORCH_PATH = BASE_DIR.parent / "graphics" / "torch.svg"
+GD3X_PATH = BASE_DIR.parent / "graphics" / "gd3x.svg"
+OSHW_PATH = BASE_DIR.parent / "graphics" / "oshw.svg"
 OUTPUT_DIR = BASE_DIR.parent / "output"
 
 
@@ -114,14 +115,27 @@ def build_board():
     board.fill([(5, 5), (w-5, 5), (w-5, h-5), (5, h-5)], layer=Layer.BOTTOM_COPPER.value)
 
     # Silkscreen text and graphics
-    board.annotate(5, 38, "Dazzler", size=1.5, layer=Layer.TOP_SILK)
-    board.add_text_ttf("Mega Example", font_path=str(FONT_PATH), at=(10, h/2), size=1.5, layer=Layer.TOP_SILK.value)
-    if GRAPHIC_PATH.exists():
-        board.add_svg_graphic(str(GRAPHIC_PATH), layer=Layer.TOP_SILK.value, scale=0.5, at=(2, 2))
-    img = Image.new("RGBA", (3, 3), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(img)
-    draw.rectangle([0, 0, 2, 2], fill=(255, 0, 0, 255))
-    board.logo(45, 35, img, scale=0.5, layer=Layer.TOP_SILK)
+    board.annotate(w / 2 - 8, h - 4, "Dazzler", size=1.5, layer=Layer.TOP_SILK)
+    board.add_text_ttf(
+        "Mega Example",
+        font_path=str(FONT_PATH),
+        at=(w / 2 - 10, h / 2 - 2),
+        size=1.5,
+        layer=Layer.TOP_SILK.value,
+    )
+
+    if TORCH_PATH.exists():
+        board.add_svg_graphic(
+            str(TORCH_PATH), layer=Layer.TOP_SILK.value, scale=0.5, at=(2, 2)
+        )
+    if GD3X_PATH.exists():
+        board.add_svg_graphic(
+            str(GD3X_PATH), layer=Layer.TOP_SILK.value, scale=0.6, at=(32, 4)
+        )
+    if OSHW_PATH.exists():
+        board.add_svg_graphic(
+            str(OSHW_PATH), layer=Layer.TOP_SILK.value, scale=0.5, at=(42, 32)
+        )
 
     # Skip DRC in this example to focus on footprint placement
     board.design_rule_check = lambda *a, **k: []

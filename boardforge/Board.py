@@ -311,10 +311,41 @@ class Board:
 
         for side, suffix in [("GTO", "top"), ("GBO", "bottom")]:
             poly = self.outline_geom if self.outline_geom is not None else box(0, 0, self.width, self.height)
-            pts = " ".join(f"{int(x*10)},{int(y*10)}" for x, y in poly.exterior.coords)
-            svg_elements = [
-                f'<polygon points="{pts}" fill="{colors["board"]}"/>'
-            ]
+
+            # Carve castellated pads out of the outline for a simple preview
+            from shapely.geometry import Point, box as sbox
+            for comp in self.components:
+                for pad in getattr(comp, "pads", []):
+                    if getattr(pad, "castellated", False) and pad.edge:
+                        r = (getattr(pad, "w", 1.2) or 1.2) / 2
+                        if pad.edge == "bottom":
+                            semi = Point(pad.x, pad.y).buffer(r, resolution=8).intersection(
+                                sbox(pad.x - r, pad.y, pad.x + r, pad.y + r)
+                            )
+                        elif pad.edge == "top":
+                            semi = Point(pad.x, pad.y).buffer(r, resolution=8).intersection(
+                                sbox(pad.x - r, pad.y - r, pad.x + r, pad.y)
+                            )
+                        elif pad.edge == "left":
+                            semi = Point(pad.x, pad.y).buffer(r, resolution=8).intersection(
+                                sbox(pad.x, pad.y - r, pad.x + r, pad.y + r)
+                            )
+                        elif pad.edge == "right":
+                            semi = Point(pad.x, pad.y).buffer(r, resolution=8).intersection(
+                                sbox(pad.x - r, pad.y - r, pad.x, pad.y + r)
+                            )
+                        else:
+                            semi = None
+                        if semi is not None:
+                            poly = poly.difference(semi)
+
+            polygons = [poly] if poly.geom_type == "Polygon" else list(poly.geoms)
+            svg_elements = []
+            for p in polygons:
+                pts = " ".join(f"{int(x*10)},{int(y*10)}" for x, y in p.exterior.coords)
+                svg_elements.append(
+                    f'<polygon points="{pts}" fill="{colors["board"]}"/>'
+                )
 
             # Traces (placeholder: draws a line for each trace)
             for trace in self.layers.get("GTL" if side == "GTO" else "GBL", []):
@@ -351,19 +382,64 @@ class Board:
                     y = int(pad.y * 10)
                     w = int((getattr(pad, "w", 1.2) or 1.2) * 10)
                     h = int((getattr(pad, "h", 1.2) or 1.2) * 10)
-                    if abs(w - h) <= 1:
-                        ring_r = int((w + 6) // 2)
-                        pad_r = int(w // 2)
-                        svg_elements.append(
-                            f'<circle cx="{x}" cy="{y}" r="{ring_r}" fill="{colors["ring"]}" stroke="#333" stroke-width="1"/>'
-                        )
-                        svg_elements.append(
-                            f'<circle cx="{x}" cy="{y}" r="{pad_r}" fill="{colors["pad"]}" stroke="#333" stroke-width="2"/>'
-                        )
+
+                    if getattr(pad, "castellated", False) and pad.edge:
+                        r = (getattr(pad, "w", 1.2) or 1.2) / 2
+                        from shapely.geometry import Point, box as sbox
+
+                        def semi_shape(rad):
+                            if pad.edge == "bottom":
+                                return Point(pad.x, pad.y).buffer(rad, resolution=8).intersection(
+                                    sbox(pad.x - rad, pad.y, pad.x + rad, pad.y + rad)
+                                )
+                            if pad.edge == "top":
+                                return Point(pad.x, pad.y).buffer(rad, resolution=8).intersection(
+                                    sbox(pad.x - rad, pad.y - rad, pad.x + rad, pad.y)
+                                )
+                            if pad.edge == "left":
+                                return Point(pad.x, pad.y).buffer(rad, resolution=8).intersection(
+                                    sbox(pad.x, pad.y - rad, pad.x + rad, pad.y + rad)
+                                )
+                            if pad.edge == "right":
+                                return Point(pad.x, pad.y).buffer(rad, resolution=8).intersection(
+                                    sbox(pad.x - rad, pad.y - rad, pad.x, pad.y + rad)
+                                )
+                            return Point(pad.x, pad.y).buffer(rad, resolution=8)
+
+                        inner = semi_shape(r)
+                        ring = None
+                        if getattr(pad, "plated", True):
+                            outer = semi_shape(r + 0.3)
+                            ring = outer.difference(inner)
+
+                        def emit_poly(shape, color, width):
+                            if shape.is_empty:
+                                return
+                            polys = [shape] if shape.geom_type == "Polygon" else list(shape.geoms)
+                            for poly in polys:
+                                pts = " ".join(f"{int(x*10)},{int(y*10)}" for x, y in poly.exterior.coords)
+                                svg_elements.append(
+                                    f'<polygon points="{pts}" fill="{color}" stroke="#333" stroke-width="{width}"/>'
+                                )
+
+                        if ring is not None:
+                            emit_poly(ring, colors["ring"], 1)
+                        emit_poly(inner, colors["pad"], 2)
+
                     else:
-                        svg_elements.append(
-                            f'<rect x="{x-w//2}" y="{y-h//2}" width="{w}" height="{h}" fill="{colors["pad"]}" stroke="#333" stroke-width="2" transform="rotate({comp.rotation},{x},{y})"/>'
-                        )
+                        if abs(w - h) <= 1:
+                            ring_r = int((w + 6) // 2)
+                            pad_r = int(w // 2)
+                            svg_elements.append(
+                                f'<circle cx="{x}" cy="{y}" r="{ring_r}" fill="{colors["ring"]}" stroke="#333" stroke-width="1"/>'
+                            )
+                            svg_elements.append(
+                                f'<circle cx="{x}" cy="{y}" r="{pad_r}" fill="{colors["pad"]}" stroke="#333" stroke-width="2"/>'
+                            )
+                        else:
+                            svg_elements.append(
+                                f'<rect x="{x-w//2}" y="{y-h//2}" width="{w}" height="{h}" fill="{colors["pad"]}" stroke="#333" stroke-width="2" transform="rotate({comp.rotation},{x},{y})"/>'
+                            )
 
             # Board holes drawn above pads
             for hx, hy, dia, ann in self.holes:
